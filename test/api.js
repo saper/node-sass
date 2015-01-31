@@ -322,6 +322,279 @@ describe('api', function() {
     });
   });
 
+  describe('.render(functions)', function() {
+    it('should call custom defined nullary function', function(done) {
+      sass.render({
+        data: 'div { color: foo(); }',
+        success: function(result) {
+          assert.equal(result.css.trim(), 'div {\n  color: 42px; }');
+          done();
+        },
+        functions: {
+          'foo()': function() {
+            return new sass.types.Number(42, 'px');
+          }
+        }
+      });
+    });
+
+    it('should call custom function with multiple args', function(done) {
+      sass.render({
+        data: 'div { color: foo(3, 42px); }',
+        success: function(result) {
+          assert.equal(result.css.trim(), 'div {\n  color: 126px; }');
+          done();
+        },
+        functions: {
+          'foo($a, $b)': function(factor, size) {
+            return new sass.types.Number(factor.getValue() * size.getValue(), size.getUnit());
+          }
+        }
+      });
+    });
+
+    it('should work with custom functions that return data asynchronously', function(done) {
+      sass.render({
+        data: 'div { color: foo(42px); }',
+        success: function(result) {
+          assert.equal(result.css.trim(), 'div {\n  color: 66em; }');
+          done();
+        },
+        functions: {
+          'foo($a)': function(size, done) {
+            setTimeout(function() {
+              done(new sass.types.Number(66, 'em'));
+            }, 50);
+          }
+        }
+      });
+    });
+
+    it('should let custom functions call setter methods on wrapped sass values (number)', function(done) {
+      sass.render({
+        data: 'div { width: foo(42px); height: bar(42px); }',
+        success: function(result) {
+          assert.equal(result.css.trim(), 'div {\n  width: 42rem;\n  height: 84px; }');
+          done();
+        },
+        functions: {
+          'foo($a)': function(size) {
+            size.setUnit('rem');
+            return size;
+          },
+          'bar($a)': function(size) {
+            size.setValue(size.getValue() * 2);
+            return size;
+          }
+        }
+      });
+    });
+
+    it('should properly convert strings when calling custom functions', function(done) {
+      sass.render({
+        data: 'div { color: foo("bar"); }',
+        success: function(result) {
+          assert.equal(result.css.trim(), 'div {\n  color: "barbar"; }');
+          done();
+        },
+        functions: {
+          'foo($a)': function(str) {
+            str = str.getValue().replace(/['"]/g, '');
+            return new sass.types.String('"' + str + str + '"');
+          }
+        }
+      });
+    });
+
+    it('should let custom functions call setter methods on wrapped sass values (string)', function(done) {
+      sass.render({
+        data: 'div { width: foo("bar"); }',
+        success: function(result) {
+          assert.equal(result.css.trim(), 'div {\n  width: "barbar"; }');
+          done();
+        },
+        functions: {
+          'foo($a)': function(str) {
+            var unquoted = str.getValue().replace(/['"]/g, '');
+            str.setValue('"' + unquoted + unquoted + '"'); 
+            return str;
+          }
+        }
+      });
+    });
+
+    it('should properly convert colors when calling custom functions', function(done) {
+      sass.render({
+        data: 'div { color: foo(#f00); background-color: bar(); border-color: baz(); }',
+        success: function(result) {
+          assert.equal(
+            result.css.trim(), 
+            'div {\n  color: rgba(255, 255, 0, 0.5);' + 
+            '\n  background-color: rgba(255, 0, 255, 0.2);' +
+            '\n  border-color: red; }'
+          );
+          done();
+        },
+        functions: {
+          'foo($a)': function(color) {
+            assert.equal(color.getR(), 255);
+            assert.equal(color.getG(), 0);
+            assert.equal(color.getB(), 0);
+            assert.equal(color.getA(), 1.0);
+
+            return new sass.types.Color(255, 255, 0, 0.5);
+          },
+          'bar()': function() {
+            return new sass.types.Color(0x33ff00ff);
+          },
+          'baz()': function() {
+            return new sass.types.Color(0xffff0000);
+          }
+        }
+      });
+    });
+
+    it('should properly convert boolean when calling custom functions', function(done) {
+      sass.render({
+        data: 'div { color: if(foo(true, false), #fff, #000);' + 
+          '\n  background-color: if(foo(true, true), #fff, #000); }',
+        success: function(result) {
+          assert.equal(result.css.trim(), 'div {\n  color: #000;\n  background-color: #fff; }');
+          done();
+        },
+        functions: {
+          'foo($a, $b)': function(a, b) {
+            return new sass.types.Boolean(a.getValue() && b.getValue());
+          }
+        }
+      });
+    });
+
+    it('should let custom functions call setter methods on wrapped sass values (boolean)', function(done) {
+      sass.render({
+        data: 'div { color: if(foo(false), #fff, #000); }',
+        success: function(result) {
+          assert.equal(result.css.trim(), 'div {\n  color: #fff; }');
+          done();
+        },
+        functions: {
+          'foo($a)': function(a) {
+            a.setValue(true);
+            return a;
+          }
+        }
+      });
+    });
+
+    it('should properly convert lists when calling custom functions', function(done) {
+      sass.render({
+        data: '$test-list: (bar, #f00, 123em); @each $item in foo($test-list) { .#{$item} { color: #fff; } }',
+        success: function(result) {
+          assert.equal(
+            result.css.trim(), 
+            '.foo {\n  color: #fff; }\n\n.bar {\n  color: #fff; }\n\n.baz {\n  color: #fff; }'
+          );
+          done();
+        },
+        functions: {
+          'foo($l)': function(list) {
+            assert.equal(list.getLength(), 3);
+            assert.ok(list.getValue(0) instanceof sass.types.String);
+            assert.equal(list.getValue(0).getValue(), 'bar');
+            assert.ok(list.getValue(1) instanceof sass.types.Color);
+            assert.equal(list.getValue(1).getR(), 0xff);
+            assert.equal(list.getValue(1).getG(), 0);
+            assert.equal(list.getValue(1).getB(), 0);
+            assert.ok(list.getValue(2) instanceof sass.types.Number);
+            assert.equal(list.getValue(2).getValue(), 123);
+            assert.equal(list.getValue(2).getUnit(), 'em');
+
+            var out = new sass.types.List(3);
+            out.setValue(0, new sass.types.String('foo'));
+            out.setValue(1, new sass.types.String('bar'));
+            out.setValue(2, new sass.types.String('baz'));
+            return out;
+          }
+        }
+      });
+    });
+
+    it('should properly convert maps when calling custom functions', function(done) {
+      sass.render({
+        data: '$test-map: foo((abc: 123, #def: true)); div { color: if(map-has-key($test-map, hello), #fff, #000); }' +
+          'span { color: map-get($test-map, baz); }',
+        success: function(result) {
+          assert.equal(result.css.trim(), 'div {\n  color: #fff; }\n\nspan {\n  color: qux; }');
+          done();
+        },
+        functions: {
+          'foo($m)': function(map) {
+            assert.equal(map.getLength(), 2);
+            assert.ok(map.getKey(0) instanceof sass.types.String);
+            assert.ok(map.getKey(1) instanceof sass.types.Color);
+            assert.ok(map.getValue(0) instanceof sass.types.Number);
+            assert.ok(map.getValue(1) instanceof sass.types.Boolean);
+            assert.equal(map.getKey(0).getValue(), 'abc');
+            assert.equal(map.getValue(0).getValue(), 123);
+            assert.equal(map.getKey(1).getR(), 0xdd);
+            assert.equal(map.getValue(1).getValue(), true);
+
+            var out = new sass.types.Map(3);
+            out.setKey(0, new sass.types.String('hello'));
+            out.setValue(0, new sass.types.String('world'));
+            out.setKey(1, new sass.types.String('foo'));
+            out.setValue(1, new sass.types.String('bar'));
+            out.setKey(2, new sass.types.String('baz'));
+            out.setValue(2, new sass.types.String('qux'));
+            return out;
+          }
+        }
+      });
+    });
+
+    it('should properly convert null when calling custom functions', function(done) {
+      sass.render({
+        data: 'div { color: if(foo("bar"), #fff, #000); } ' + 
+          'span { color: if(foo(null), #fff, #000); }' +
+          'table { color: if(bar() == null, #fff, #000); }',
+        success: function(result) {
+          assert.equal(
+            result.css.trim(), 
+            'div {\n  color: #000; }\n\nspan {\n  color: #fff; }\n\ntable {\n  color: #fff; }'
+          );
+          done();
+        },
+        functions: {
+          'foo($a)': function(a) {
+            return new sass.types.Boolean(a instanceof sass.types.Null);
+          },
+          'bar()': function() {
+            return new sass.types.Null();
+          }
+        }
+      });
+    });
+  });
+
+  describe('.renderSync(functions)', function() {
+    it('should call custom function in sync mode', function(done) {
+      var result = sass.renderSync({
+        data: 'div { width: cos(0) * 50px; }',
+        functions: {
+          'cos($a)': function(angle) {
+            if (!(angle instanceof sass.types.Number)) {
+              throw new TypeError('Unexpected type for "angle"');
+            }
+            return new sass.types.Number(Math.cos(angle.getValue()));
+          }
+        }
+      });
+
+      assert.equal(result.css.trim(), 'div {\n  width: 50px; }');
+      done();
+    });
+  });
+
   describe('.renderSync(options)', function() {
     it('should compile sass to css with file', function(done) {
       var expected = read(fixture('simple/expected.css'), 'utf8').trim();

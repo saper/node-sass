@@ -1,6 +1,12 @@
+#ifndef SASS_CONTEXT_WRAPPER
+#define SASS_CONTEXT_WRAPPER
+
+#include <vector>
 #include <nan.h>
 #include <condition_variable>
 #include "libsass/sass_context.h"
+#include "custom_function_bridge.h"
+#include "custom_importer_bridge.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,13 +22,8 @@ extern "C" {
     // binding related
     bool is_sync;
     void* cookie;
-    const char* prev;
-    const char* file;
-    std::mutex* importer_mutex;
-    std::condition_variable* importer_condition_variable;
 
     // libsass related
-    Sass_Import** imports;
     Sass_Data_Context* dctx;
     Sass_File_Context* fctx;
 
@@ -34,7 +35,9 @@ extern "C" {
     Persistent<Object> result;
     NanCallback* error_callback;
     NanCallback* success_callback;
-    NanCallback* importer_callback;
+
+    std::vector<CustomFunctionBridge*> function_bridges;
+    CustomImporterBridge* importer_bridge;
   };
 
   struct sass_context_wrapper*      sass_make_context_wrapper(void);
@@ -43,4 +46,6 @@ extern "C" {
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

@@ -5,6 +5,10 @@
       'sources': [
         'src/binding.cpp',
         'src/sass_context_wrapper.cpp',
+        'src/custom_function_bridge.cpp',
+        'src/custom_importer_bridge.cpp',
+        'src/create_string.cpp',
+        'src/sass_types.cpp',
         'src/libsass/ast.cpp',
         'src/libsass/base64vlq.cpp',
         'src/libsass/bind.cpp',

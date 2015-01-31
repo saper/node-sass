@@ -1,109 +1,37 @@
 #include <nan.h>
 #include <vector>
 #include "sass_context_wrapper.h"
+#include "custom_function_bridge.h"
+#include "create_string.h"
+#include "sass_types.h"
 
-char* CreateString(Local<Value> value) {
-  if (value->IsNull() || !value->IsString()) {
-    return 0;
-  }
-
-  String::Utf8Value string(value);
-  char *str = (char *)malloc(string.length() + 1);
-  strcpy(str, *string);
-  return str;
-}
-
-std::vector<sass_context_wrapper*> imports_collection;
-
-void prepare_import_results(Local<Value> returned_value, sass_context_wrapper* ctx_w) {
-  NanScope();
-
-  if (returned_value->IsArray()) {
-    Handle<Array> array = Handle<Array>::Cast(returned_value);
-
-    ctx_w->imports = sass_make_import_list(array->Length());
-
-    for (size_t i = 0; i < array->Length(); ++i) {
-      Local<Value> value = array->Get(i);
-
-      if (!value->IsObject())
-        continue;
-
-      Local<Object> object = Local<Object>::Cast(value);
-      char* path = CreateString(object->Get(NanNew<String>("file")));
-      char* contents = CreateString(object->Get(NanNew<String>("contents")));
-
-      ctx_w->imports[i] = sass_make_import_entry(path, (!contents || contents[0] == '\0') ? 0 : strdup(contents), 0);
-    }
-  }
-  else if (returned_value->IsObject()) {
-    ctx_w->imports = sass_make_import_list(1);
-    Local<Object> object = Local<Object>::Cast(returned_value);
-    char* path = CreateString(object->Get(NanNew<String>("file")));
-    char* contents = CreateString(object->Get(NanNew<String>("contents")));
-
-    ctx_w->imports[0] = sass_make_import_entry(path, (!contents || contents[0] == '\0') ? 0 : strdup(contents), 0);
-  }
-  else {
-    ctx_w->imports = sass_make_import_list(1);
-    ctx_w->imports[0] = sass_make_import_entry(ctx_w->file, 0, 0);
-  }
-}
-
-void dispatched_async_uv_callback(uv_async_t *req) {
-  NanScope();
-  sass_context_wrapper* ctx_w = static_cast<sass_context_wrapper*>(req->data);
-
-  TryCatch try_catch;
-
-  imports_collection.push_back(ctx_w);
-
-  Handle<Value> argv[] = {
-    NanNew<String>(strdup(ctx_w->file ? ctx_w->file : 0)),
-    NanNew<String>(strdup(ctx_w->prev ? ctx_w->prev : 0)),
-    NanNew<Number>(imports_collection.size() - 1)
-  };
-
-  NanNew<Value>(ctx_w->importer_callback->Call(3, argv));
-
-  if (try_catch.HasCaught()) {
-    node::FatalException(try_catch);
-  }
-}
 
 struct Sass_Import** sass_importer(const char* file, const char* prev, void* cookie)
 {
   sass_context_wrapper* ctx_w = static_cast<sass_context_wrapper*>(cookie);
+  CustomImporterBridge& bridge = *(ctx_w->importer_bridge);
 
-  if (!ctx_w->is_sync) {
-    /*  that is async: Render() or RenderFile(),
-     *  the default even loop is unblocked so it
-     *  can run uv_async_send without a push.
-     */
+  std::vector<void*> argv;
+  argv.push_back((void*) file);
+  argv.push_back((void*) prev);
 
-    std::unique_lock<std::mutex> lock(*ctx_w->importer_mutex);
+  return bridge(argv);
+}
 
-    ctx_w->file = file ? strdup(file) : 0;
-    ctx_w->prev = prev ? strdup(prev) : 0;
-    ctx_w->async.data = (void*)ctx_w;
+union Sass_Value* sass_custom_function(const union Sass_Value* s_args, void* cookie)
+{
+  CustomFunctionBridge& bridge = *(static_cast<CustomFunctionBridge*>(cookie));
 
-    uv_async_send(&ctx_w->async);
-    ctx_w->importer_condition_variable->wait(lock);
-  }
-  else {
-    NanScope();
-
-    Handle<Value> argv[] = {
-      NanNew<String>(file),
-      NanNew<String>(prev)
-    };
-
-    Local<Object> returned_value = Local<Object>::Cast(NanNew<Value>(ctx_w->importer_callback->Call(2, argv)));
-
-    prepare_import_results(returned_value->Get(NanNew("objectLiteral")), ctx_w);
+  std::vector<void*> argv;
+  for (unsigned l = sass_list_get_length(s_args), i = 0; i < l; i++) {
+    argv.push_back((void*) sass_list_get_value(s_args, i));
   }
 
-  return ctx_w->imports;
+  try {
+    return bridge(argv);
+  } catch (const std::exception& e) {
+    return sass_make_error(e.what());
+  }
 }
 
 void ExtractOptions(Local<Object> options, void* cptr, sass_context_wrapper* ctx_w, bool isFile, bool isSync) {
@@ -124,7 +52,6 @@ void ExtractOptions(Local<Object> options, void* cptr, sass_context_wrapper* ctx
 
   struct Sass_Options* sass_options = sass_context_get_options(ctx);
 
-  ctx_w->importer_callback = NULL;
   ctx_w->is_sync = isSync;
 
   if (!isSync) {
@@ -141,8 +68,7 @@ void ExtractOptions(Local<Object> options, void* cptr, sass_context_wrapper* ctx
   Local<Function> importer_callback = Local<Function>::Cast(options->Get(NanNew("importer")));
 
   if (importer_callback->IsFunction()) {
-    ctx_w->importer_callback = new NanCallback(importer_callback);
-    uv_async_init(uv_default_loop(), &ctx_w->async, (uv_async_cb)dispatched_async_uv_callback);
+    ctx_w->importer_bridge = new CustomImporterBridge(new NanCallback(importer_callback), ctx_w->is_sync);
     sass_option_set_importer(sass_options, sass_make_importer(sass_importer, ctx_w));
   }
 
@@ -161,6 +87,32 @@ void ExtractOptions(Local<Object> options, void* cptr, sass_context_wrapper* ctx
   sass_option_set_source_map_file(sass_options, CreateString(options->Get(NanNew("sourceMap"))));
   sass_option_set_include_path(sass_options, CreateString(options->Get(NanNew("paths"))));
   sass_option_set_precision(sass_options, options->Get(NanNew("precision"))->Int32Value());
+
+
+  Local<Object> custom_functions = Local<Object>::Cast(options->Get(NanNew("functions")));
+
+  if (custom_functions->IsObject()) {
+    Local<Array> signatures = custom_functions->GetOwnPropertyNames();
+    unsigned num_signatures = signatures->Length();
+    Sass_C_Function_List fn_list = sass_make_function_list(num_signatures);
+
+    for (unsigned i = 0; i < num_signatures; i++) {
+      Local<String> signature = Local<String>::Cast(signatures->Get(NanNew(i)));
+      Local<Function> callback = Local<Function>::Cast(custom_functions->Get(signature));
+
+      if (!signature->IsString() || !callback->IsFunction()) {
+        NanThrowError(NanNew("options.functions must be a (signature -> function) hash"));
+      }
+
+      CustomFunctionBridge* bridge = new CustomFunctionBridge(new NanCallback(callback), ctx_w->is_sync);
+      ctx_w->function_bridges.push_back(bridge);
+
+      Sass_C_Function_Callback fn = sass_make_function(CreateString(signature), sass_custom_function, bridge);
+      sass_function_set_list_entry(fn_list, i, fn);
+    }
+
+    sass_option_set_c_functions(sass_options, fn_list);
+  }
 }
 
 void GetStats(sass_context_wrapper* ctx_w, Sass_Context* ctx) {
@@ -243,10 +195,6 @@ void make_callback(uv_work_t* req) {
   }
   if (try_catch.HasCaught()) {
     node::FatalException(try_catch);
-  }
-
-  if (ctx_w->importer_callback) {
-    uv_close((uv_handle_t*)&ctx_w->async, NULL);
   }
 
   sass_free_context_wrapper(ctx_w);
@@ -343,37 +291,12 @@ NAN_METHOD(RenderFileSync) {
   NanReturnValue(NanNew<Boolean>(result == 0));
 }
 
-NAN_METHOD(ImportedCallback) {
-  NanScope();
-
-  TryCatch try_catch;
-
-  Local<Object> options = args[0]->ToObject();
-  Local<Value> returned_value = options->Get(NanNew("objectLiteral"));
-  size_t index = options->Get(NanNew("index"))->Int32Value();
-
-  if (index >= imports_collection.size()) {
-    NanReturnUndefined();
-  }
-
-  sass_context_wrapper* ctx_w = imports_collection[index];
-
-  prepare_import_results(returned_value, ctx_w);
-  ctx_w->importer_condition_variable->notify_all();
-
-  if (try_catch.HasCaught()) {
-    node::FatalException(try_catch);
-  }
-
-  NanReturnValue(NanNew<Number>(0));
-}
-
 void RegisterModule(v8::Handle<v8::Object> target) {
   NODE_SET_METHOD(target, "render", Render);
   NODE_SET_METHOD(target, "renderSync", RenderSync);
   NODE_SET_METHOD(target, "renderFile", RenderFile);
   NODE_SET_METHOD(target, "renderFileSync", RenderFileSync);
-  NODE_SET_METHOD(target, "importedCallback", ImportedCallback);
+  SassTypes::Factory::initExports(target);
 }
 
 NODE_MODULE(binding, RegisterModule);
