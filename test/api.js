@@ -593,6 +593,27 @@ describe('api', function() {
       assert.equal(result.css.trim(), 'div {\n  width: 50px; }');
       done();
     });
+
+    it('should return a list of selectors after calling the headings custom function', function(done) {
+      var result = sass.renderSync({
+        data: '#{headings(2,5)} { color: #08c; }',
+        functions: {
+          'headings($from: 0, $to: 6)': function(from, to) {
+            var i, f = from.getValue(), t = to.getValue(),
+                list = new sass.types.List(t - f + 1);
+
+            for (i = f; i <= t; i++) {
+              list.setValue(i - f, new sass.types.String('h' + i));
+            }
+
+            return list;
+          }
+        }
+      });
+
+      assert.equal(result.css.trim(), 'h2, h3, h4, h5 {\n  color: #08c; }');
+      done();
+    });
   });
 
   describe('.renderSync(options)', function() {
