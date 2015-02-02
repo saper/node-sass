@@ -575,6 +575,21 @@ describe('api', function() {
       });
     });
 
+    it('should let us register custom functions without signatures', function(done) {
+      sass.render({
+        data: 'div { color: foo(20, 22); }',
+        success: function(result) {
+          assert.equal(result.css.trim(), 'div {\n  color: 42em; }');
+          done();
+        },
+        functions: {
+          foo: function(a, b) {
+            return new sass.types.Number(a.getValue() + b.getValue(), 'em');
+          }
+        }
+      });
+    });
+
     it('should fail when returning anything other than a sass value from a custom function', function(done) {
       sass.render({
         data: 'div { color: foo(); }',
@@ -698,6 +713,20 @@ describe('api', function() {
         functions: {
           'foo()': function() {
             return sass.types.Number(42, 'em');
+          }
+        }
+      });
+
+      assert.equal(result.css.trim(), 'div {\n  color: 42em; }');
+      done();
+    });
+
+    it('should let us register custom functions without signatures', function(done) {
+      var result = sass.renderSync({
+        data: 'div { color: foo(20, 22); }',
+        functions: {
+          foo: function(a, b) {
+            return new sass.types.Number(a.getValue() + b.getValue(), 'em');
           }
         }
       });
