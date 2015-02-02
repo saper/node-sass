@@ -2,6 +2,7 @@
 #define SASS_TYPES_H
 
 #include <nan.h>
+#include <vector>
 #include "sass_context_wrapper.h"
 
 
@@ -65,6 +66,18 @@ namespace SassTypes
       }
 
       static NAN_METHOD(New) {
+        if (!args.IsConstructCall()) {
+          unsigned argc = args.Length();
+          std::vector<Handle<v8::Value>> argv;
+
+          argv.reserve(argc);
+          for (unsigned i = 0; i < argc; i++) {
+            argv.push_back(args[i]);
+          }
+
+          return NanNew(T::get_constructor())->NewInstance(argc, &argv[0]);
+        }
+
         Sass_Value* value = T::construct(args);
         T* obj = new T(value);
         sass_delete_value(value);

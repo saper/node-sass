@@ -614,6 +614,20 @@ describe('api', function() {
       assert.equal(result.css.trim(), 'h2, h3, h4, h5 {\n  color: #08c; }');
       done();
     });
+
+      it('should let custom function invoke sass types constructors without the `new` keyword', function(done) {
+      var result = sass.renderSync({
+        data: 'div { color: foo(); }',
+        functions: {
+          'foo()': function() {
+            return sass.types.Number(42, 'em');
+          }
+        }
+      });
+
+      assert.equal(result.css.trim(), 'div {\n  color: 42em; }');
+      done();
+    });
   });
 
   describe('.renderSync(options)', function() {
