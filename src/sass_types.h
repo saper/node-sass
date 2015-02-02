@@ -36,7 +36,7 @@ namespace SassTypes
   template <class T>
   class CoreValue : public Value {
     public:
-      static char const* get_constructor_name() { return "SassValue"; }
+      static constexpr char const* constructor_name = "SassValue";
 
       CoreValue(Sass_Value* v) : Value(v) {}
 
@@ -56,7 +56,7 @@ namespace SassTypes
       static Handle<Function> get_constructor() {
         if (constructor.IsEmpty()) {
           Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-          tpl->SetClassName(NanNew(T::get_constructor_name()));
+          tpl->SetClassName(NanNew(T::constructor_name));
           tpl->InstanceTemplate()->SetInternalFieldCount(1);
           T::initPrototype(tpl->PrototypeTemplate());
           constructor = Persistent<Function>::New(tpl->GetFunction());
@@ -104,7 +104,7 @@ namespace SassTypes
   class Number : public CoreValue<Number> {
     public:
       Number(Sass_Value* v) : CoreValue(v) {}
-      static char const* get_constructor_name() { return "SassNumber"; }
+      static constexpr char const* constructor_name = "SassNumber";
       static Sass_Value* construct(const Arguments&);
 
       static void initPrototype(Handle<ObjectTemplate> proto) {
@@ -124,7 +124,7 @@ namespace SassTypes
   class String : public CoreValue<String> {
     public:
       String(Sass_Value* v) : CoreValue(v) {}
-      static char const* get_constructor_name() { return "SassString"; }
+      static constexpr char const* constructor_name = "SassString";
       static Sass_Value* construct(const Arguments&);
 
       static void initPrototype(Handle<ObjectTemplate> proto) {
@@ -140,7 +140,7 @@ namespace SassTypes
   class Color : public CoreValue<Color> {
     public:
       Color(Sass_Value* v) : CoreValue(v) {}
-      static char const* get_constructor_name() { return "SassColor"; }
+      static constexpr char const* constructor_name = "SassColor";
       static Sass_Value* construct(const Arguments&);
 
       static void initPrototype(Handle<ObjectTemplate> proto) {
@@ -168,7 +168,7 @@ namespace SassTypes
   class Boolean : public CoreValue<Boolean> {
     public:
       Boolean(Sass_Value* v) : CoreValue(v) {}
-      static char const* get_constructor_name() { return "SassBoolean"; }
+      static constexpr char const* constructor_name = "SassBoolean";
       static Sass_Value* construct(const Arguments&);
 
       static void initPrototype(Handle<ObjectTemplate> proto) {
@@ -184,7 +184,7 @@ namespace SassTypes
   class List : public CoreValue<List> {
     public:
       List(Sass_Value* v) : CoreValue(v) {}
-      static char const* get_constructor_name() { return "SassList"; }
+      static constexpr char const* constructor_name = "SassList";
       static Sass_Value* construct(const Arguments&);
 
       static void initPrototype(Handle<ObjectTemplate> proto) {
@@ -206,7 +206,7 @@ namespace SassTypes
   class Map : public CoreValue<Map> {
     public:
       Map(Sass_Value* v) : CoreValue(v) {}
-      static char const* get_constructor_name() { return "SassMap"; }
+      static constexpr char const* constructor_name = "SassMap";
       static Sass_Value* construct(const Arguments&);
 
       static void initPrototype(Handle<ObjectTemplate> proto) {
@@ -228,7 +228,7 @@ namespace SassTypes
   class Null : public CoreValue<Null> {
     public:
       Null(Sass_Value* v) : CoreValue(v) {}
-      static char const* get_constructor_name() { return "SassNull"; }
+      static constexpr char const* constructor_name = "SassNull";
       static Sass_Value* construct(const Arguments&);
 
       static void initPrototype(Handle<ObjectTemplate> proto) {}
