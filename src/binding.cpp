@@ -3,7 +3,7 @@
 #include "sass_context_wrapper.h"
 #include "custom_function_bridge.h"
 #include "create_string.h"
-#include "sass_types.h"
+#include "sass_types/factory.h"
 
 
 struct Sass_Import** sass_importer(const char* file, const char* prev, void* cookie)

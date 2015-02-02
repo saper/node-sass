@@ -4,11 +4,9 @@
       'target_name': 'binding',
       'sources': [
         'src/binding.cpp',
-        'src/sass_context_wrapper.cpp',
         'src/custom_function_bridge.cpp',
         'src/custom_importer_bridge.cpp',
         'src/create_string.cpp',
-        'src/sass_types.cpp',
         'src/libsass/ast.cpp',
         'src/libsass/base64vlq.cpp',
         'src/libsass/bind.cpp',
@@ -42,7 +40,17 @@
         'src/libsass/to_string.cpp',
         'src/libsass/units.cpp',
         'src/libsass/utf8_string.cpp',
-        'src/libsass/util.cpp'
+        'src/libsass/util.cpp',
+        'src/sass_context_wrapper.cpp',
+        'src/sass_types/boolean.cpp',
+        'src/sass_types/color.cpp',
+        'src/sass_types/factory.cpp',
+        'src/sass_types/list.cpp',
+        'src/sass_types/map.cpp',
+        'src/sass_types/null.cpp',
+        'src/sass_types/number.cpp',
+        'src/sass_types/string.cpp',
+        'src/sass_types/value.cpp'
       ],
       'include_dirs': [
         '<!(node -e "require(\'nan\')")'
