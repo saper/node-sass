@@ -17,5 +17,5 @@ namespace SassTypes
   }
 
 
-  void Null::initPrototype(Handle<ObjectTemplate> proto) {}
+  void Null::initPrototype(Handle<ObjectTemplate>) {}
 }

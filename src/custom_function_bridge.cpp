@@ -8,7 +8,6 @@ Sass_Value* CustomFunctionBridge::post_process_return_value(Handle<Value> val) c
   try {
     return SassTypes::Factory::unwrap(val)->get_sass_value();
   } catch (const std::invalid_argument& e) {
-    NanThrowError(NanNew(e.what()));
     return sass_make_error(e.what());
   }
 }

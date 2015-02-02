@@ -87,13 +87,17 @@ namespace SassTypes
       return NanNew(T::get_constructor())->NewInstance(argc, &argv[0]);
     }
 
-    Sass_Value* value = T::construct(args);
-    T* obj = new T(value);
-    sass_delete_value(value);
+    try {
+      Sass_Value* value = T::construct(args);
+      T* obj = new T(value);
+      sass_delete_value(value);
 
-    NanSetInternalFieldPointer(args.This(), 0, obj);
+      NanSetInternalFieldPointer(args.This(), 0, obj);
 
-    return args.This();
+      return args.This();
+    } catch (const std::exception& e) {
+      return NanThrowError(NanNew(e.what()));
+    }
   }
 
 

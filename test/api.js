@@ -574,6 +574,83 @@ describe('api', function() {
         }
       });
     });
+
+    it('should fail when returning anything other than a sass value from a custom function', function(done) {
+      sass.render({
+        data: 'div { color: foo(); }',
+        error: function(e) {
+          assert.ok(/A SassValue object was expected/.test(e.message));
+          done();
+        },
+        functions: {
+          'foo()': function() {
+            return {};
+          }
+        }
+      });
+    });
+
+    it('should properly bubble up standard JS errors thrown by custom functions', function(done) {
+      sass.render({
+        data: 'div { color: foo(); }',
+        error: function(e) {
+          assert.ok(/This is a test error/.test(e.message));
+          done();
+        },
+        functions: {
+          'foo()': function() {
+            throw new RangeError('This is a test error');
+          }
+        }
+      });
+    });
+
+    it('should properly bubble up unknown errors thrown by custom functions', function(done) {
+      sass.render({
+        data: 'div { color: foo(); }',
+        error: function(e) {
+          assert.ok(/unexpected error/.test(e.message));
+          done();
+        },
+        functions: {
+          'foo()': function() {
+            throw {};
+          }
+        }
+      });
+    });
+
+    it('should properly bubble up errors from sass value constructors', function(done) {
+      sass.render({
+        data: 'div { color: foo(); }',
+        error: function(e) {
+          assert.ok(/Argument should be a bool/.test(e.message));
+          done();
+        },
+        functions: {
+          'foo()': function() {
+            return new sass.types.Boolean('foo');
+          }
+        }
+      });
+    });
+
+    it('should properly bubble up errors from sass value setters', function(done) {
+      sass.render({
+        data: 'div { color: foo(); }',
+        error: function(e) {
+          assert.ok(/Supplied value should be a string/.test(e.message));
+          done();
+        },
+        functions: {
+          'foo()': function() {
+            var ret = new sass.types.Number(42);
+            ret.setUnit(123);
+            return ret;
+          }
+        }
+      });
+    });
   });
 
   describe('.renderSync(functions)', function() {
@@ -615,7 +692,7 @@ describe('api', function() {
       done();
     });
 
-      it('should let custom function invoke sass types constructors without the `new` keyword', function(done) {
+    it('should let custom function invoke sass types constructors without the `new` keyword', function(done) {
       var result = sass.renderSync({
         data: 'div { color: foo(); }',
         functions: {
@@ -626,6 +703,79 @@ describe('api', function() {
       });
 
       assert.equal(result.css.trim(), 'div {\n  color: 42em; }');
+      done();
+    });
+
+    it('should fail when returning anything other than a sass value from a custom function', function(done) {
+      assert.throws(function() {
+        sass.renderSync({
+          data: 'div { color: foo(); }',
+          functions: {
+            'foo()': function() {
+              return {};
+            }
+          }
+        });
+      }, /A SassValue object was expected/);
+
+      done();
+    });
+
+    it('should properly bubble up standard JS errors thrown by custom functions', function(done) {
+      assert.throws(function() {
+        sass.renderSync({
+          data: 'div { color: foo(); }',
+          functions: {
+            'foo()': function() {
+              throw new RangeError('This is a test error');
+            }
+          }
+        });
+      }, /This is a test error/);
+      
+      done();
+    });
+
+    it('should properly bubble up unknown errors thrown by custom functions', function(done) {
+      assert.throws(function() {
+        sass.renderSync({
+          data: 'div { color: foo(); }',
+          functions: {
+            'foo()': function() {
+              throw {};
+            }
+          }
+        });
+      }, /unexpected error/);
+      
+      done();
+    });
+
+    it('should properly bubble up errors from sass value getters/setters/constructors', function(done) {
+      assert.throws(function() {
+        sass.renderSync({
+          data: 'div { color: foo(); }',
+          functions: {
+            'foo()': function() {
+              return new sass.types.Boolean('foo');
+            }
+          }
+        });
+      }, /Argument should be a bool/);
+
+      assert.throws(function() {
+        sass.renderSync({
+          data: 'div { color: foo(); }',
+          functions: {
+            'foo()': function() {
+              var ret = new sass.types.Number(42);
+              ret.setUnit(123);
+              return ret;
+            }
+          }
+        });
+      }, /Supplied value should be a string/);
+      
       done();
     });
   });

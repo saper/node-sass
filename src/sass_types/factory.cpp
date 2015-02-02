@@ -9,6 +9,7 @@
 #include "list.h"
 #include "map.h"
 #include "null.h"
+#include "error.h"
 
 
 using namespace v8;
@@ -39,6 +40,9 @@ namespace SassTypes
       case SASS_NULL:
         return new Null(v);
 
+      case SASS_ERROR:
+        return new Error(v);
+
       default:
         throw std::invalid_argument("Unknown type");
     }
@@ -56,6 +60,7 @@ namespace SassTypes
     types->Set(NanNew("List"), List::get_constructor());
     types->Set(NanNew("Map"), Map::get_constructor());
     types->Set(NanNew("Null"), Null::get_constructor());
+    types->Set(NanNew("Error"), Error::get_constructor());
   }
 
 

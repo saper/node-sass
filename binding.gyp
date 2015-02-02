@@ -44,6 +44,7 @@
         'src/sass_context_wrapper.cpp',
         'src/sass_types/boolean.cpp',
         'src/sass_types/color.cpp',
+        'src/sass_types/error.cpp',
         'src/sass_types/factory.cpp',
         'src/sass_types/list.cpp',
         'src/sass_types/map.cpp',
