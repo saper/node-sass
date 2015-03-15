@@ -2,7 +2,7 @@
 #define SASS_TYPES_ERROR_H
 
 #include <nan.h>
-#include "../libsass/sass_values.h"
+#include <sass_values.h>
 #include "core_value.h"
 
 

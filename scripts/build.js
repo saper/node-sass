@@ -48,9 +48,20 @@ function afterBuild(options) {
  */
 
 function build(options) {
-  var bin = options.platform === 'win32' ? 'node-gyp.cmd' : 'node-gyp';
-  var proc = spawn(bin, ['rebuild'].concat(options.args), {
-    customFds: [0, 1, 2]
+  var arguments = [
+    path.join('node_modules', 'pangyp', 'bin', 'node-gyp'),
+    'rebuild',
+  ].concat(
+    [ 'libsass_ext', 'libsass_cflags',
+      'libsass_ldflags', 'libsass_library' ].map(function(subject) {
+      return ['--', subject, '=', process.env[subject.toUpperCase()] || ''].join('');
+    })
+  ).concat(options.args);
+
+  console.log(['Building:', process.execPath].concat(arguments).join(' '));
+
+  var proc = spawn(process.execPath, arguments, {
+    stdio: [0, 1, 2]
   });
 
   proc.on('exit', function(code) {
