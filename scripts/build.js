@@ -50,7 +50,19 @@ function afterBuild(options) {
  */
 
 function build(options) {
-  var proc = spawn(process.execPath, ['node_modules/pangyp/bin/node-gyp', 'rebuild'].concat(options.args), {
+  var arguments = [
+    path.join('node_modules', 'pangyp', 'bin', 'node-gyp'),
+    'rebuild',
+  ].concat(
+    [ 'libsass_ext', 'libsass_cflags',
+      'libsass_ldflags', 'libsass_library' ].map(function(subject) {
+      return ['--', subject, '=', process.env[subject.toUpperCase()] || ''].join('');
+    })
+  ).concat(options.args);
+
+  console.log(['Building:', process.execPath].concat(arguments).join(' '));
+
+  var proc = spawn(process.execPath, arguments, {
     stdio: [0, 1, 2]
   });
 
