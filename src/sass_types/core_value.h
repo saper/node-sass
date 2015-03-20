@@ -3,7 +3,7 @@
 
 #include <nan.h>
 #include <vector>
-#include "../libsass/sass_values.h"
+#include <sass_values.h>
 #include "value.h"
 #include "factory.h"
 

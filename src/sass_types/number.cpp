@@ -1,6 +1,6 @@
 #include <nan.h>
 #include "number.h"
-#include "../libsass/sass_values.h"
+#include <sass_values.h>
 #include "../create_string.h"
 #include "core_value.h"
 

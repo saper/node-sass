@@ -1,6 +1,6 @@
 #include <nan.h>
 #include "factory.h"
-#include "../libsass/sass_values.h"
+#include <sass_values.h>
 #include "value.h"
 #include "number.h"
 #include "string.h"

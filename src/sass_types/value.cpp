@@ -1,5 +1,5 @@
 #include "value.h"
-#include "../libsass/sass_values.h"
+#include <sass_values.h>
 
 using namespace v8;
 

@@ -1,6 +1,6 @@
 #include <nan.h>
 #include "null.h"
-#include "../libsass/sass_values.h"
+#include <sass_values.h>
 #include "core_value.h"
 
 

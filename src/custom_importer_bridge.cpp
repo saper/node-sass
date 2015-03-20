@@ -1,5 +1,5 @@
 #include <nan.h>
-#include "libsass/sass_context.h"
+#include <sass_context.h>
 #include "custom_importer_bridge.h"
 #include "create_string.h"
 

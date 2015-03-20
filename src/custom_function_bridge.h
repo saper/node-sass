@@ -3,7 +3,7 @@
 
 #include <nan.h>
 #include "callback_bridge.h"
-#include "libsass/sass_context.h"
+#include <sass_context.h>
 
 
 using namespace v8;
