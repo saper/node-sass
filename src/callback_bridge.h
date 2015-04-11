@@ -70,11 +70,12 @@ CallbackBridge<T, L>::CallbackBridge(NanCallback* callback, bool is_sync) : call
 
 template <typename T, typename L>
 CallbackBridge<T, L>::~CallbackBridge() {
-  if (!is_sync) {
-    fprintf(stderr, "T<%p>: bridge will be destroyed, hope %p got called\n", (void*) this, (void *)&this->async);
-  }
   delete this->callback;
   NanDisposePersistent(this->wrapper);
+  if (!is_sync) {
+    fprintf(stderr, "T<%p>: bridge will be destroyed, hope %p got called\n", (void*) this, (void *)&this->async);
+    uv_close((uv_handle_t*)&this->async, NULL);
+  }
 }
 
 template <typename T, typename L>
@@ -118,8 +119,7 @@ void CallbackBridge<T, L>::dispatched_async_uv_callback(uv_async_t *req) {
 
   NanNew<Value>(bridge->callback->Call(argv_v8.size(), &argv_v8[0]));
 
-  fprintf(stderr, "T<%p>: Closing handle(%d) %p\n", (void *)bridge, bridge->cnt, (void *)req);
-  uv_close((uv_handle_t*)req, NULL);
+  fprintf(stderr, "T<%p>: NOT Closing handle(%d) %p\n", (void *)bridge, bridge->cnt, (void *)req);
   if (try_catch.HasCaught()) {
     node::FatalException(try_catch);
   }
