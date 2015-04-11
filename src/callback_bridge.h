@@ -17,7 +17,7 @@ class CallbackBridge {
     virtual ~CallbackBridge();
 
     // Executes the callback
-    T operator()(std::vector<void*>);
+    T operator()(std::vector<L>);
 
   protected:
     // We will expose a bridge object to the JS callback that wraps this instance so we don't loose context.
@@ -74,7 +74,7 @@ CallbackBridge<T, L>::~CallbackBridge() {
 }
 
 template <typename T, typename L>
-T CallbackBridge<T, L>::operator()(std::vector<void*> argv) {
+T CallbackBridge<T, L>::operator()(std::vector<L> argv) {
   // argv.push_back(wrapper);
 
   if (this->is_sync) {
