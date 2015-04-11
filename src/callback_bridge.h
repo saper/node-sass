@@ -58,8 +58,9 @@ template <typename T, typename L>
 CallbackBridge<T, L>::CallbackBridge(NanCallback* callback, bool is_sync) : callback(callback), is_sync(is_sync) {
   // This assumes the main thread will be the one instantiating the bridge
   if (!is_sync) {
-    uv_async_init(uv_default_loop(), &this->async, (uv_async_cb) dispatched_async_uv_callback);
+    fprintf(stderr, "Scheduling handle %p\n", (void *)&this->async);
     this->async.data = (void*) this;
+    uv_async_init(uv_default_loop(), &this->async, (uv_async_cb) dispatched_async_uv_callback);
   }
 
   NanAssignPersistent(wrapper, NanNew(CallbackBridge<T, L>::get_wrapper_constructor())->NewInstance());
@@ -70,10 +71,6 @@ template <typename T, typename L>
 CallbackBridge<T, L>::~CallbackBridge() {
   delete this->callback;
   NanDisposePersistent(this->wrapper);
-
-  if (!is_sync) {
-    uv_close((uv_handle_t*)&this->async, NULL);
-  }
 }
 
 template <typename T, typename L>
@@ -103,6 +100,7 @@ template <typename T, typename L>
 void CallbackBridge<T, L>::dispatched_async_uv_callback(uv_async_t *req) {
   CallbackBridge* bridge = static_cast<CallbackBridge*>(req->data);
 
+  fprintf(stderr, "Running handle %p\n", (void *)req);
   NanScope();
   TryCatch try_catch;
 
@@ -111,6 +109,8 @@ void CallbackBridge<T, L>::dispatched_async_uv_callback(uv_async_t *req) {
 
   NanNew<Value>(bridge->callback->Call(argv_v8.size(), &argv_v8[0]));
 
+  fprintf(stderr, "Closing handle %p\n", (void *)req);
+  uv_close((uv_handle_t*)req, NULL);
   if (try_catch.HasCaught()) {
     node::FatalException(try_catch);
   }
