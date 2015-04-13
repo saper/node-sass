@@ -61,7 +61,7 @@ CallbackBridge<T, L>::CallbackBridge(NanCallback* callback, bool is_sync) : call
   // This assumes the main thread will be the one instantiating the bridge
   if (!is_sync) {
     this->async = new uv_async_t;
-    fprintf(stderr, "T<%p>: Scheduling handle %p\n", (void*) this, (void *)this->async);
+    fprintf(stderr, "T<%p>: Scheduling handle %p; sizeof(T) is 0x%zx, sizeof(uv_async_t) is 0x%zx\n", (void*) this, (void *)this->async, sizeof(*this), sizeof(*this->async));
     this->async->data = (void*) this;
     uv_async_init(uv_default_loop(), this->async, (uv_async_cb) dispatched_async_uv_callback);
   }
