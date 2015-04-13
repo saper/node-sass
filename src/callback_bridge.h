@@ -183,7 +183,7 @@ NAN_METHOD(CallbackBridge<T COMMA L>::New) {
 
 template <typename T, typename L>
 void CallbackBridge<T, L>::async_gone(uv_handle_t *handle) {
-  delete handle;
+  delete (uv_async_t *)handle;
 }
 
 #endif
