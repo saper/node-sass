@@ -25,6 +25,7 @@ extern "C" {
   sass_context_wrapper* sass_make_context_wrapper() {
     sass_context_wrapper* ctx_w = (sass_context_wrapper*)calloc(1, sizeof(sass_context_wrapper));
 
+    strncpy(ctx_w->magic, "ABQY", sizeof(ctx_w->magic));
     ctx_w->importer_mutex = new std::mutex();
     ctx_w->importer_condition_variable = new std::condition_variable();
 

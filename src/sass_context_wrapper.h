@@ -15,7 +15,7 @@ extern "C" {
 
   struct sass_context_wrapper {
     // binding related
-    const char magic[5]= "ABQY";
+    char magic[5];
     bool is_sync;
     void* cookie;
     const char* prev;
