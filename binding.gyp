@@ -29,11 +29,11 @@
         }],
         ['libsass_ext == "auto"', {
           'cflags_cc': [
-            '<!(pkg-config --cflags libsass)',
+            '-g <!(pkg-config --cflags libsass)',
           ],
           'link_settings': {
             'ldflags': [
-              '<!(pkg-config --libs-only-other --libs-only-L libsass)',
+              '-g <!(pkg-config --libs-only-other --libs-only-L libsass)',
             ],
             'libraries': [
               '<!(pkg-config --libs-only-l libsass)',

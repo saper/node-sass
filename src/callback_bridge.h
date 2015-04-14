@@ -1,6 +1,7 @@
 #ifndef CALLBACK_BRIDGE_H
 #define CALLBACK_BRIDGE_H
 
+#include <uv.h>
 #include <vector>
 #include <nan.h>
 #include <condition_variable>
@@ -31,7 +32,8 @@ class CallbackBridge {
 
     // The callback that will get called in the main thread after the worker thread used for the sass
     // compilation step makes a call to uv_async_send()
-    static void dispatched_async_uv_callback(uv_async_t*);
+    static void queued_work(uv_work_t*);
+    static void completed_work(uv_work_t*, int);
 
     // The V8 values sent to our ReturnCallback must be read on the main thread not the sass worker thread.
     // This gives a chance to specialized subclasses to transform those values into whatever makes sense to
@@ -45,9 +47,8 @@ class CallbackBridge {
     bool is_sync;
     int cnt;
 
-    std::mutex cv_mutex;
-    std::condition_variable condition_variable;
-    uv_async_t *async;
+    uv_work_t *async;
+    uv_barrier_t blocker;
     std::vector<L> argv;
     bool has_returned;
     T return_value;
@@ -60,10 +61,10 @@ template <typename T, typename L>
 CallbackBridge<T, L>::CallbackBridge(NanCallback* callback, bool is_sync) : callback(callback), is_sync(is_sync), cnt(0) {
   // This assumes the main thread will be the one instantiating the bridge
   if (!is_sync) {
-    this->async = new uv_async_t;
+    this->async = new uv_work_t;
     fprintf(stderr, "T<%p>: Scheduling handle %p; sizeof(T) is 0x%zx, sizeof(uv_async_t) is 0x%zx\n", (void*) this, (void *)this->async, sizeof(*this), sizeof(*this->async));
     this->async->data = (void*) this;
-    uv_async_init(uv_default_loop(), this->async, (uv_async_cb) dispatched_async_uv_callback);
+    // uv_async_init(uv_default_loop(), this->async, (uv_async_cb) dispatched_async_uv_callback);
   }
 
   NanAssignPersistent(wrapper, NanNew(CallbackBridge<T, L>::get_wrapper_constructor())->NewInstance());
@@ -76,9 +77,7 @@ CallbackBridge<T, L>::~CallbackBridge() {
   NanDisposePersistent(this->wrapper);
   if (!is_sync) {
     fprintf(stderr, "T<%p>: bridge will be destroyed, hope %p got called\n", (void*) this, (void *)this->async);
-    fprintf(stderr, "T<%p>: was_closing? %d\n", (void*) this, uv_is_closing((uv_handle_t *)this->async));
     uv_close((uv_handle_t*)this->async, &async_gone);
-    fprintf(stderr, "T<%p>: is_closing? %d\n", (void*) this, uv_is_closing((uv_handle_t *)this->async));
   }
 }
 
@@ -102,16 +101,18 @@ T CallbackBridge<T, L>::operator()(std::vector<L> argv) {
   this->argv = argv;
   this->has_returned = false;
   fprintf(stderr, "T<%p>: Calling async(%d)\n", (void *)this, cnt);
-  uv_async_send(this->async);
+  uv_barrier_init(&this->blocker, 4);
+  uv_queue_work(uv_default_loop(), this->async, (uv_work_cb)queued_work, (uv_after_work_cb)completed_work);
+//  fprintf(stderr, "T<%p>: Calling async(%d)\n", (void *)this, cnt);
+//  uv_async_send(this->async);
   fprintf(stderr, "T<%p>: About to wait for %p\n", (void *)this, (void *)this->async);
-  std::unique_lock<std::mutex> lock(this->cv_mutex);
-  this->condition_variable.wait(lock, [this] { return this->has_returned; });
-
+  if (uv_barrier_wait(&this->blocker) > 0)
+    uv_barrier_destroy(&this->blocker);
   return this->return_value;
 }
 
 template <typename T, typename L>
-void CallbackBridge<T, L>::dispatched_async_uv_callback(uv_async_t *req) {
+void CallbackBridge<T, L>::queued_work(uv_work_t *req) {
   CallbackBridge* bridge = static_cast<CallbackBridge*>(req->data);
 
   fprintf(stderr, "T<%p>: Running handle %p\n", (void *)bridge, (void *)req);
@@ -130,6 +131,13 @@ void CallbackBridge<T, L>::dispatched_async_uv_callback(uv_async_t *req) {
 }
 
 template <typename T, typename L>
+void CallbackBridge<T, L>::completed_work(uv_work_t *req, int status) {
+  CallbackBridge* bridge = static_cast<CallbackBridge*>(req->data);
+
+  fprintf(stderr, "T<%p>: Completed work %p, status=%d\n", (void *)bridge, (void *)req, status);
+}
+
+template <typename T, typename L>
 NAN_METHOD(CallbackBridge<T COMMA L>::ReturnCallback) {
   NanScope();
 
@@ -139,13 +147,9 @@ NAN_METHOD(CallbackBridge<T COMMA L>::ReturnCallback) {
   fprintf(stderr, "T<%p>: ReturnCallback(%d)\n", (void *)bridge, bridge->cnt);
   bridge->return_value = bridge->post_process_return_value(args[0]);
 
-  {
-    std::lock_guard<std::mutex> lock(bridge->cv_mutex);
-    bridge->has_returned = true;
-  }
-
-  fprintf(stderr, "T<%p>: sending notification\n", (void *)bridge);
-  bridge->condition_variable.notify_all();
+  if (uv_barrier_wait(&bridge->blocker) > 0)
+    uv_barrier_destroy(&bridge->blocker);
+  fprintf(stderr, "T<%p>: barrier open\n", (void *)bridge);
 
   if (try_catch.HasCaught()) {
     node::FatalException(try_catch);
@@ -183,7 +187,7 @@ NAN_METHOD(CallbackBridge<T COMMA L>::New) {
 
 template <typename T, typename L>
 void CallbackBridge<T, L>::async_gone(uv_handle_t *handle) {
-  delete (uv_async_t *)handle;
+  delete (uv_work_t *)handle;
 }
 
 #endif
