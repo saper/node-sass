@@ -76,6 +76,8 @@ void dispatched_async_uv_callback(uv_async_t *req) {
   }
 }
 
+#if defined(SASS_C_CONTEXT)
+/* libsass 3.1.0 importer interface */
 struct Sass_Import** sass_importer(const char* file, const char* prev, void* cookie)
 {
   sass_context_wrapper* ctx_w = static_cast<sass_context_wrapper*>(cookie);
@@ -93,7 +95,7 @@ struct Sass_Import** sass_importer(const char* file, const char* prev, void* coo
     ctx_w->prev = prev ? strdup(prev) : 0;
     ctx_w->async->data = (void*)ctx_w;
 
-    fprintf(stderr, "Thread=%p: sass_importer(): About to wait...", uv_thread_self());
+    fprintf(stderr, "Thread=%p: sass_importer(): About to wait...\n", uv_thread_self());
     uv_async_send(ctx_w->async);
     ctx_w->importer_condition_variable->wait(lock);
     fprintf(stderr, "Thread=%p: sass_importer(): ... waiting complete\n", uv_thread_self());
@@ -117,6 +119,55 @@ struct Sass_Import** sass_importer(const char* file, const char* prev, void* coo
 
   return ctx_w->imports;
 }
+#endif
+
+#if defined(SASS_C_CONTEXT_H)
+/* libsass 3.2.0 importer interface */
+Sass_Import_List sass_importer(const char* file, Sass_Importer_Entry cb, struct Sass_Compiler *comp)
+{
+  void *cookie = sass_importer_get_cookie(cb);
+  struct Sass_Import* previous = sass_compiler_get_last_import(comp);
+  const char* prev = sass_import_get_path(previous);
+  sass_context_wrapper* ctx_w = static_cast<sass_context_wrapper*>(cookie);
+
+  fprintf(stderr, "Thread=%p: sass_importer(), magic=%s, is_sync=%d\n", uv_thread_self(), ctx_w->magic, ctx_w->is_sync);
+  if (!ctx_w->is_sync) {
+    /*  that is async: Render() or RenderFile(),
+     *  the default even loop is unblocked so it
+     *  can run uv_async_send without a push.
+     */
+
+    std::unique_lock<std::mutex> lock(*ctx_w->importer_mutex);
+
+    ctx_w->file = file ? strdup(file) : 0;
+    ctx_w->prev = prev ? strdup(prev) : 0;
+    ctx_w->async->data = (void*)ctx_w;
+
+    fprintf(stderr, "Thread=%p: sass_importer(): About to wait...\n", uv_thread_self());
+    uv_async_send(ctx_w->async);
+    ctx_w->importer_condition_variable->wait(lock);
+    fprintf(stderr, "Thread=%p: sass_importer(): ... waiting complete\n", uv_thread_self());
+  }
+  else {
+    fprintf(stderr, "Thread=%p: sass_importer(): sync call prepare\n", uv_thread_self());
+    NanScope();
+    fprintf(stderr, "Thread=%p: sass_importer(): got scope\n", uv_thread_self());
+
+    Handle<Value> argv[] = {
+      NanNew<String>(file),
+      NanNew<String>(prev)
+    };
+
+    fprintf(stderr, "Thread=%p: sass_importer(): sync call\n", uv_thread_self());
+    Local<Object> returned_value = Local<Object>::Cast(NanNew<Value>(ctx_w->importer_callback->Call(2, argv)));
+    fprintf(stderr, "Thread=%p: sass_importer(): sync call done\n", uv_thread_self());
+
+    prepare_import_results(returned_value->Get(NanNew("objectLiteral")), ctx_w);
+  }
+
+  return ctx_w->imports;
+}
+#endif
 
 void ExtractOptions(Local<Object> options, void* cptr, sass_context_wrapper* ctx_w, bool isFile, bool isSync) {
   NanScope();
