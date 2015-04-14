@@ -98,7 +98,7 @@ The callback function is passed a results object, containing the following keys:
 `includePaths` is an `Array` of path `String`s to look for any `@import`ed files. It is recommended that you use this option if you are using the `data` option and have **any** `@import` directives, as otherwise [libsass] may not find your depended-on files.
 
 #### imagePath
-`imagePath` is a `String` that represents the public image path. When using the `image-url()` function in a stylesheet, this path will be prepended to the path you supply. eg. Given an `imagePath` of `/path/to/images`, `background-image: image-url('image.png')` will compile to `background-image: url("/path/to/images/image.png")`
+`image-url()` and related functionality (`imagePath` etc.) have been removed.
 
 #### indentedSyntax
 `indentedSyntax` is a `Boolean` flag to determine if [Sass Indented Syntax](http://sass-lang.com/documentation/file.INDENTED_SYNTAX.html) should be used to parse provided string or a file.
@@ -305,7 +305,6 @@ Output will be saved with the same name as input SASS file into the current work
     --source-map-embed         Embed sourceMappingUrl as data URI
     --source-map-contents      Embed include contents in map
     --include-path             Path to look for imported files
-    --image-path               Path to prepend when using the `image-url()` helper
     --precision                The amount of precision allowed in decimal numbers
     --stdout                   Print the resulting CSS to stdout
     --importer                 Path to custom importer
