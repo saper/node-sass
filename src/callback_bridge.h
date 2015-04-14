@@ -87,7 +87,8 @@ T CallbackBridge<T, L>::operator()(std::vector<L> argv) {
   // argv.push_back(wrapper);
   cnt ++;
 
-  if (this->is_sync) {
+  fprintf(stderr, "operator(): thread=%p\n", uv_thread_self());
+  if (is_sync) {
     fprintf(stderr, "T<%p>: Calling sync(%d)\n", (void *)this, cnt);
     std::vector<Handle<Value>> argv_v8 = pre_process_args(argv);
     argv_v8.push_back(NanNew(wrapper));
@@ -114,6 +115,7 @@ template <typename T, typename L>
 void CallbackBridge<T, L>::dispatched_async_uv_callback(uv_async_t *req) {
   CallbackBridge* bridge = static_cast<CallbackBridge*>(req->data);
 
+  fprintf(stderr, "queued_work(): thread=%p\n", uv_thread_self());
   fprintf(stderr, "T<%p>: Running handle %p\n", (void *)bridge, (void *)req);
   NanScope();
   TryCatch try_catch;

@@ -8,6 +8,7 @@
 Sass_Import_List sass_importer(const char* cur_path, Sass_Importer_Entry cb, struct Sass_Compiler* comp)
 {
   void* cookie = sass_importer_get_cookie(cb);
+  fprintf(stderr, "sass_importer: thread=%p, bridge=%p\n", uv_thread_self(), cookie);
   struct Sass_Import* previous = sass_compiler_get_last_import(comp);
   const char* prev_path = sass_import_get_path(previous);
   sass_context_wrapper* ctx_w = static_cast<sass_context_wrapper*>(cookie);
@@ -25,6 +26,7 @@ union Sass_Value* sass_custom_function(const union Sass_Value* s_args, Sass_Func
   void* cookie = sass_function_get_cookie(cb);
   CustomFunctionBridge& bridge = *(static_cast<CustomFunctionBridge*>(cookie));
 
+  fprintf(stderr, "sass_custom_function: thread=%p, bridge=%p\n", uv_thread_self(), cookie);
   std::vector<void*> argv;
   for (unsigned l = sass_list_get_length(s_args), i = 0; i < l; i++) {
     argv.push_back((void*)sass_list_get_value(s_args, i));
@@ -200,6 +202,8 @@ void MakeCallback(uv_work_t* req) {
   sass_context_wrapper* ctx_w = static_cast<sass_context_wrapper*>(req->data);
   struct Sass_Context* ctx;
 
+
+  fprintf(stderr, "MakeCallback: thread=%p\n", uv_thread_self());
   if (ctx_w->dctx) {
     ctx = sass_data_context_get_context(ctx_w->dctx);
   }
@@ -238,6 +242,7 @@ NAN_METHOD(render) {
 
   ExtractOptions(options, dctx, ctx_w, false, false);
 
+  fprintf(stderr, "render: thread=%p\n", uv_thread_self());
   int status = uv_queue_work(uv_default_loop(), &ctx_w->request, compile_it, (uv_after_work_cb)MakeCallback);
 
   assert(status == 0);
@@ -268,6 +273,7 @@ NAN_METHOD(render_sync) {
 NAN_METHOD(render_file) {
   NanScope();
 
+  fprintf(stderr, "render_file: thread=%p\n", uv_thread_self());
   Local<Object> options = args[0]->ToObject();
   char* input_path = create_string(options->Get(NanNew("file")));
   struct Sass_File_Context* fctx = sass_make_file_context(input_path);
