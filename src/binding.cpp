@@ -91,10 +91,10 @@ struct Sass_Import** sass_importer(const char* file, const char* prev, void* coo
 
     ctx_w->file = file ? strdup(file) : 0;
     ctx_w->prev = prev ? strdup(prev) : 0;
-    ctx_w->async.data = (void*)ctx_w;
+    ctx_w->async->data = (void*)ctx_w;
 
-    uv_async_send(&ctx_w->async);
     fprintf(stderr, "Thread=%p: sass_importer(): About to wait...", uv_thread_self());
+    uv_async_send(ctx_w->async);
     ctx_w->importer_condition_variable->wait(lock);
     fprintf(stderr, "Thread=%p: sass_importer(): ... waiting complete\n", uv_thread_self());
   }
@@ -138,9 +138,11 @@ void ExtractOptions(Local<Object> options, void* cptr, sass_context_wrapper* ctx
 
   ctx_w->importer_callback = NULL;
   ctx_w->is_sync = isSync;
+  ctx_w->async = new uv_async_t;
+  ctx_w->request = new uv_work_t;
 
   if (!isSync) {
-    ctx_w->request.data = ctx_w;
+    ctx_w->request->data = ctx_w;
 
     // async (callback) style
     Local<Function> success_callback = Local<Function>::Cast(options->Get(NanNew("success")));
@@ -154,13 +156,14 @@ void ExtractOptions(Local<Object> options, void* cptr, sass_context_wrapper* ctx
 
   if (importer_callback->IsFunction()) {
     ctx_w->importer_callback = new NanCallback(importer_callback);
-    uv_async_init(uv_default_loop(), &ctx_w->async, (uv_async_cb)dispatched_async_uv_callback);
+    uv_async_init(uv_default_loop(), ctx_w->async, (uv_async_cb)dispatched_async_uv_callback);
 #if defined(SASS_C_CONTEXT_H) /* Hack: libsass 3.1.0 used SASS_C_CONTEXT */
     Sass_Importer_List c_importers = sass_make_importer_list(1);
     c_importers[0] = sass_make_importer((Sass_Importer_Fn)sass_importer, 0, (void *)ctx_w);
     sass_option_set_c_importers(sass_options, c_importers);
 #else
     /* libsass 3.1.0 supported only one single importer */
+    uv_async_init(uv_default_loop(), ctx_w->async, (uv_async_cb)dispatched_async_uv_callback);
     sass_option_set_importer(sass_options, sass_make_importer(sass_importer, ctx_w));
 #endif
   }
@@ -230,6 +233,10 @@ int GetResult(sass_context_wrapper* ctx_w, Sass_Context* ctx) {
   return status;
 }
 
+static void async_gone(uv_handle_t *handle) {
+  delete (uv_async_t *)handle;
+}
+
 void make_callback(uv_work_t* req) {
   NanScope();
 
@@ -265,8 +272,9 @@ void make_callback(uv_work_t* req) {
   }
 
   if (ctx_w->importer_callback) {
-    uv_close((uv_handle_t*)&ctx_w->async, NULL);
+    uv_close((uv_handle_t*)ctx_w->async, async_gone);
   }
+  delete ctx_w->request;
 
   sass_free_context_wrapper(ctx_w);
 }
@@ -282,7 +290,7 @@ NAN_METHOD(Render) {
 
   ExtractOptions(options, dctx, ctx_w, false, false);
 
-  int status = uv_queue_work(uv_default_loop(), &ctx_w->request, compile_it, (uv_after_work_cb)make_callback);
+  int status = uv_queue_work(uv_default_loop(), ctx_w->request, compile_it, (uv_after_work_cb)make_callback);
 
   assert(status == 0);
 
@@ -330,7 +338,7 @@ NAN_METHOD(RenderFile) {
 
   ExtractOptions(options, fctx, ctx_w, true, false);
 
-  int status = uv_queue_work(uv_default_loop(), &ctx_w->request, compile_it, (uv_after_work_cb)make_callback);
+  int status = uv_queue_work(uv_default_loop(), ctx_w->request, compile_it, (uv_after_work_cb)make_callback);
 
   assert(status == 0);
 
