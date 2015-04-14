@@ -5,9 +5,9 @@
 
 #ifdef __cplusplus
 extern "C" {
+  using namespace v8;
 #endif
 
-  using namespace v8;
 
   void compile_data(struct Sass_Data_Context* dctx);
   void compile_file(struct Sass_File_Context* fctx);
@@ -15,6 +15,7 @@ extern "C" {
 
   struct sass_context_wrapper {
     // binding related
+    const char magic[5]= "ABQY";
     bool is_sync;
     void* cookie;
     const char* prev;

@@ -80,7 +80,7 @@ struct Sass_Import** sass_importer(const char* file, const char* prev, void* coo
 {
   sass_context_wrapper* ctx_w = static_cast<sass_context_wrapper*>(cookie);
 
-  fprintf(stderr, "Thread=%p: sass_importer()\n", uv_thread_self());
+  fprintf(stderr, "Thread=%p: sass_importer(), magic=%s, is_sync=%d\n", uv_thread_self(), ctx_w->magic, ctx_w->is_sync);
   if (!ctx_w->is_sync) {
     /*  that is async: Render() or RenderFile(),
      *  the default even loop is unblocked so it
@@ -138,6 +138,7 @@ void ExtractOptions(Local<Object> options, void* cptr, sass_context_wrapper* ctx
 
   ctx_w->importer_callback = NULL;
   ctx_w->is_sync = isSync;
+  fprintf(stderr, "ExtractOptions: %d\n", isSync);
   ctx_w->async = new uv_async_t;
   ctx_w->request = new uv_work_t;
 
@@ -334,7 +335,7 @@ NAN_METHOD(RenderFile) {
   char* input_path = CreateString(options->Get(NanNew("file")));
   struct Sass_File_Context* fctx = sass_make_file_context(input_path);
   sass_context_wrapper* ctx_w = sass_make_context_wrapper();
-  fprintf(stderr, "Thread=%p: RenderFile()\n", uv_thread_self());
+  fprintf(stderr, "Thread=%p: RenderFile(), sync=%d\n", uv_thread_self(), false);
 
   ExtractOptions(options, fctx, ctx_w, true, false);
 
