@@ -7,6 +7,7 @@
 
 Sass_Import_List sass_importer(const char* cur_path, Sass_Importer_Entry cb, struct Sass_Compiler* comp)
 {
+  fprintf(stderr, "sass_importer: thread=%p\n", uv_thread_self());
   void* cookie = sass_importer_get_cookie(cb);
   struct Sass_Import* previous = sass_compiler_get_last_import(comp);
   const char* prev_path = sass_import_get_path(previous);
@@ -200,6 +201,8 @@ void MakeCallback(uv_work_t* req) {
   sass_context_wrapper* ctx_w = static_cast<sass_context_wrapper*>(req->data);
   struct Sass_Context* ctx;
 
+
+  fprintf(stderr, "MakeCallback: thread=%p\n", uv_thread_self());
   if (ctx_w->dctx) {
     ctx = sass_data_context_get_context(ctx_w->dctx);
   }
@@ -238,6 +241,7 @@ NAN_METHOD(render) {
 
   ExtractOptions(options, dctx, ctx_w, false, false);
 
+  fprintf(stderr, "render: thread=%p\n", uv_thread_self());
   int status = uv_queue_work(uv_default_loop(), &ctx_w->request, compile_it, (uv_after_work_cb)MakeCallback);
 
   assert(status == 0);
@@ -268,6 +272,7 @@ NAN_METHOD(render_sync) {
 NAN_METHOD(render_file) {
   NanScope();
 
+  fprintf(stderr, "render_file: thread=%p\n", uv_thread_self());
   Local<Object> options = args[0]->ToObject();
   char* input_path = create_string(options->Get(NanNew("file")));
   struct Sass_File_Context* fctx = sass_make_file_context(input_path);
