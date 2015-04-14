@@ -1,6 +1,10 @@
 #include <nan.h>
 #include <vector>
 #include "sass_context_wrapper.h"
+#if defined(SASS_C_CONTEXT_H)
+/* Hack: libsass 3.1.0 used SASS_C_CONTEXT */
+#include <sass_functions.h>
+#endif
 
 char* CreateString(Local<Value> value) {
   if (value->IsNull() || !value->IsString()) {
@@ -143,7 +147,14 @@ void ExtractOptions(Local<Object> options, void* cptr, sass_context_wrapper* ctx
   if (importer_callback->IsFunction()) {
     ctx_w->importer_callback = new NanCallback(importer_callback);
     uv_async_init(uv_default_loop(), &ctx_w->async, (uv_async_cb)dispatched_async_uv_callback);
+#if defined(SASS_C_CONTEXT_H) /* Hack: libsass 3.1.0 used SASS_C_CONTEXT */
+    Sass_Importer_List c_importers = sass_make_importer_list(1);
+    c_importers[0] = sass_make_importer((Sass_Importer_Fn)sass_importer, 0, (void *)ctx_w);
+    sass_option_set_c_importers(sass_options, c_importers);
+#else
+    /* libsass 3.1.0 supported only one single importer */
     sass_option_set_importer(sass_options, sass_make_importer(sass_importer, ctx_w));
+#endif
   }
 
   if(!isFile) {
