@@ -61,7 +61,7 @@ CallbackBridge<T, L>::CallbackBridge(NanCallback* callback, bool is_sync) : call
   // This assumes the main thread will be the one instantiating the bridge
   if (!is_sync) {
     this->async = new uv_async_t;
-    fprintf(stderr, "T<%p>: Scheduling handle %p; sizeof(T) is 0x%zx, sizeof(uv_async_t) is 0x%zx\n", (void*) this, (void *)this->async, sizeof(*this), sizeof(*this->async));
+    fprintf(stderr, "T<%p>: Scheduling handle %p, isolate=%p; thread=%p; sizeof(T) is 0x%zx, sizeof(uv_async_t) is 0x%zx\n", (void*) this, (void *)this->async, v8::Isolate::GetCurrent(), uv_thread_self(), sizeof(*this), sizeof(*this->async));
     this->async->data = (void*) this;
     uv_async_init(uv_default_loop(), this->async, (uv_async_cb) dispatched_async_uv_callback);
   }
@@ -115,8 +115,7 @@ template <typename T, typename L>
 void CallbackBridge<T, L>::dispatched_async_uv_callback(uv_async_t *req) {
   CallbackBridge* bridge = static_cast<CallbackBridge*>(req->data);
 
-  fprintf(stderr, "queued_work(): thread=%p\n", uv_thread_self());
-  fprintf(stderr, "T<%p>: Running handle %p\n", (void *)bridge, (void *)req);
+  fprintf(stderr, "T<%p>, thread=%p, isolate=%p\n: Running handle %p\n", (void *)bridge, uv_thread_self(), v8::Isolate::GetCurrent(), (void *)req);
   NanScope();
   TryCatch try_catch;
 
@@ -138,7 +137,7 @@ NAN_METHOD(CallbackBridge<T COMMA L>::ReturnCallback) {
   CallbackBridge<T, L>* bridge = static_cast<CallbackBridge<T, L>*>(NanGetInternalFieldPointer(args.This(), 0));
   TryCatch try_catch;
 
-  fprintf(stderr, "T<%p>: ReturnCallback(%d)\n", (void *)bridge, bridge->cnt);
+  fprintf(stderr, "T<%p>: thread=%p, isolate=%p, ReturnCallback(%d)\n", (void *)bridge, uv_thread_self(), v8::Isolate::GetCurrent(), bridge->cnt);
   bridge->return_value = bridge->post_process_return_value(args[0]);
 
   {
@@ -179,7 +178,8 @@ Handle<Function> CallbackBridge<T, L>::get_wrapper_constructor() {
 template <typename T, typename L>
 NAN_METHOD(CallbackBridge<T COMMA L>::New) {
   NanScope();
-  fprintf(stderr, "CallbackBridge<T,L>::New\n");
+  fprintf(stderr, "CallbackBridge<T,L>::New thread=%p, isolate=%p\n",
+    uv_thread_self(), v8::Isolate::GetCurrent());
   NanReturnValue(args.This());
 }
 
