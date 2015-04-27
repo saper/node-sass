@@ -1,4 +1,5 @@
 #include <nan.h>
+#include <cstdio>
 #include "custom_importer_bridge.h"
 #include "create_string.h"
 
@@ -50,6 +51,7 @@ SassImportList CustomImporterBridge::post_process_return_value(Handle<Value> val
     imports[0] = get_importer_entry(Local<Object>::Cast(returned_value));
   }
 
+  fprintf(stderr, "Imports returned = %p\n", imports);
   return imports;
 }
 
