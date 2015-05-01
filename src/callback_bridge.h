@@ -103,9 +103,9 @@ T CallbackBridge<T, L>::operator()(std::vector<void*> argv) {
   this->argv = argv;
   this->has_returned = false;
   std::unique_lock<std::mutex> lock(this->cv_mutex);
-  fprintf(stderr, "T<%p>: Calling async(%d)\n", (void *)this, cnt);
+  fprintf(stderr, "T<%p>: Calling async(%d) async=%p\n", (void *)this, cnt, (void *)this->async);
   uv_async_send(this->async);
-  fprintf(stderr, "T<%p>: About to wait for %p\n", (void *)this, (void *)&this->async);
+  fprintf(stderr, "T<%p>: About to wait for %p, async=%p\n", (void *)this, (void *)&this->async);
   this->condition_variable.wait(lock, [this] { return this->has_returned; });
 
   return this->return_value;

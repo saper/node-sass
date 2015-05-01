@@ -81,8 +81,11 @@ Sass_Import* CustomImporterBridge::get_importer_entry(const Local<Object>& objec
   }
 
   char* path = create_string(returned_file);
+  fprintf(stderr, "Imports returned: path = %p\n", path);
   char* contents = create_string(returned_contents);
+  fprintf(stderr, "Imports returned: contents = %p [%s]\n", contents, contents ? contents : "NULL");
   char* srcmap = create_string(returned_map);
+  fprintf(stderr, "Imports returned: srcmap = %p\n", returned_map);
 
   return sass_make_import_entry(path, contents, srcmap);
 }
