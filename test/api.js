@@ -76,6 +76,15 @@ describe('api', function() {
       });
     });
 
+    it('should NOT compile empty data string', function(done) {
+      sass.render({
+        data: ''
+      }, function(error) {
+        assert.equal(error.message, 'Data context created with empty source string');
+        done();
+      });
+    });
+
     it('should compile sass to css using indented syntax', function(done) {
       var src = read(fixture('indent/index.sass'), 'utf8');
       var expected = read(fixture('indent/expected.css'), 'utf8').trim();
