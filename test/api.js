@@ -1235,8 +1235,8 @@ describe('api', function() {
           'swap-quotes($s1, $s2)': function(s1, s2) {
             s1.setQuoted(!s1.isQuoted());
             s2.setQuoted(!s2.isQuoted());
-            console.log("s1: " + s1.isQuoted());
-            console.log("s2: " + s2.isQuoted());
+            console.log('s1: ' + s1.isQuoted());
+            console.log('s2: ' + s2.isQuoted());
             var list = new sass.types.List(2);
             list.setValue(0, s1);
             list.setValue(1, s2);
