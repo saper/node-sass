@@ -1247,7 +1247,7 @@ describe('api', function() {
         }
       });
 
-      assert.equal(result.css.toString().trim(), '.swapped { result: asdf, "qwerty"; }');
+      assert.equal(result.css.toString().trim(), '.swapped {\n  result: asdf, "qwerty"; }');
       done();
     });
 
