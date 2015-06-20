@@ -1231,6 +1231,7 @@ describe('api', function() {
     it('should handle quoted strings', function(done) {
       var s1a, s2a, s3a; 
       var s1q, s2q, s3q; 
+      // jshint quotmark: false
       var result = sass.renderSync({
         data: '.swapped { result: swap-quotes("asdf", qwerty, \'jcukng\'); }',
         functions: {
@@ -1257,6 +1258,7 @@ describe('api', function() {
           }
         }
       });
+      // jshint quotmark: single
 
       assert.equal(s1a, true);
       assert.equal(s2a, false);
