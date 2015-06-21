@@ -1,9 +1,11 @@
 #include <nan.h>
 #include "custom_function_bridge.h"
 #include "sass_types/factory.h"
+#include "debug.h"
 
 Sass_Value* CustomFunctionBridge::post_process_return_value(v8::Local<v8::Value> val) const {
   try {
+    TRACEINST(&val) << " CustomFunctionBridge: unwrapping custom function return value...";
     return SassTypes::Factory::unwrap(val)->get_sass_value();
   }
   catch (const std::invalid_argument& e) {
@@ -15,6 +17,7 @@ std::vector<v8::Local<v8::Value>> CustomFunctionBridge::pre_process_args(std::ve
   std::vector<v8::Local<v8::Value>> argv = std::vector<v8::Local<v8::Value>>();
 
   for (void* value : in) {
+    TRACEINST(&value) << " CustomFunctionBridge: wrapping custom function parameters...";
     argv.push_back(SassTypes::Factory::create(static_cast<Sass_Value*>(value))->get_js_object());
   }
 
