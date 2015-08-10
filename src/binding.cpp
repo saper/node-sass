@@ -42,7 +42,11 @@ void ExtractOptions(v8::Local<v8::Object> options, void* cptr, sass_context_wrap
 
   struct Sass_Context* ctx;
 
-  ctx_w->result.Reset(Nan::Get(options, Nan::New("result").ToLocalChecked()).ToLocalChecked()->ToObject());
+  ctx_w->result.Reset(
+    Nan::To<v8::Object>(
+      Nan::Get(options, Nan::New("result").ToLocalChecked()).ToLocalChecked()
+    ).ToLocalChecked()
+  );
 
   if (is_file) {
     ctx_w->fctx = (struct Sass_File_Context*) cptr;
@@ -165,7 +169,16 @@ void GetStats(sass_context_wrapper* ctx_w, Sass_Context* ctx) {
     }
   }
 
-  Nan::Set(Nan::Get(Nan::New(ctx_w->result), Nan::New("stats").ToLocalChecked()).ToLocalChecked()->ToObject(), Nan::New("includedFiles").ToLocalChecked(), arr);
+  Nan::Set(
+    Nan::To<v8::Object>(
+      Nan::Get(
+        Nan::New(ctx_w->result),
+        Nan::New("stats").ToLocalChecked()
+      ).ToLocalChecked()
+    ).ToLocalChecked(),
+    Nan::New("includedFiles").ToLocalChecked(),
+    arr
+  );
 }
 
 int GetResult(sass_context_wrapper* ctx_w, Sass_Context* ctx, bool is_sync = false) {
@@ -232,7 +245,7 @@ void MakeCallback(uv_work_t* req) {
 
 NAN_METHOD(render) {
 
-  v8::Local<v8::Object> options = info[0]->ToObject();
+  v8::Local<v8::Object> options = Nan::To<v8::Object>(info[0]).ToLocalChecked();
   char* source_string = create_string(Nan::Get(options, Nan::New("data").ToLocalChecked()));
   struct Sass_Data_Context* dctx = sass_make_data_context(source_string);
   sass_context_wrapper* ctx_w = sass_make_context_wrapper();
@@ -246,7 +259,7 @@ NAN_METHOD(render) {
 
 NAN_METHOD(render_sync) {
 
-  v8::Local<v8::Object> options = info[0]->ToObject();
+  v8::Local<v8::Object> options = Nan::To<v8::Object>(info[0]).ToLocalChecked();
   char* source_string = create_string(Nan::Get(options, Nan::New("data").ToLocalChecked()));
   struct Sass_Data_Context* dctx = sass_make_data_context(source_string);
   struct Sass_Context* ctx = sass_data_context_get_context(dctx);
@@ -265,7 +278,7 @@ NAN_METHOD(render_sync) {
 
 NAN_METHOD(render_file) {
 
-  v8::Local<v8::Object> options = info[0]->ToObject();
+  v8::Local<v8::Object> options = Nan::To<v8::Object>(info[0]).ToLocalChecked();
   char* input_path = create_string(Nan::Get(options, Nan::New("file").ToLocalChecked()));
   struct Sass_File_Context* fctx = sass_make_file_context(input_path);
   sass_context_wrapper* ctx_w = sass_make_context_wrapper();
@@ -279,7 +292,7 @@ NAN_METHOD(render_file) {
 
 NAN_METHOD(render_file_sync) {
 
-  v8::Local<v8::Object> options = info[0]->ToObject();
+  v8::Local<v8::Object> options = Nan::To<v8::Object>(info[0]).ToLocalChecked();
   char* input_path = create_string(Nan::Get(options, Nan::New("file").ToLocalChecked()));
   struct Sass_File_Context* fctx = sass_make_file_context(input_path);
   struct Sass_Context* ctx = sass_file_context_get_context(fctx);
