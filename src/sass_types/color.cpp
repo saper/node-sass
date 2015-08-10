@@ -5,49 +5,77 @@ namespace SassTypes
 {
   Color::Color(Sass_Value* v) : SassValueWrapper(v) {}
 
+  Sass_Value* Color::construct(Nan::Maybe <double> r, 
+                               Nan::Maybe <double> g, 
+                               Nan::Maybe <double> b,
+                               Nan::Maybe <double> a)
+  {
+    if (r.IsNothing())
+        throw std::invalid_argument("Cannot determine red color value");
+    if (g.IsNothing())
+        throw std::invalid_argument("Cannot determine green color value");
+    if (b.IsNothing())
+        throw std::invalid_argument("Cannot determine blue color value");
+    if (a.IsNothing())
+        throw std::invalid_argument("Cannot determine alpha color value");
+    return sass_make_color(r.FromJust(), g.FromJust(), b.FromJust(), a.FromJust());
+  }
+
+
+  Sass_Value* Color::construct(Nan::Maybe <double> r, 
+                               Nan::Maybe <double> g, 
+                               Nan::Maybe <double> b)
+  {
+    if (r.IsNothing())
+        throw std::invalid_argument("Cannot determine red color value");
+    if (g.IsNothing())
+        throw std::invalid_argument("Cannot determine green color value");
+    if (b.IsNothing())
+        throw std::invalid_argument("Cannot determine blue color value");
+    return sass_make_color(r.FromJust(), g.FromJust(), b.FromJust(), 1.0);
+  }
+
+
+  Sass_Value* Color::construct(Nan::Maybe <int32_t> argb)
+  {
+    if (argb.IsJust()) {  
+      return sass_make_color(
+        (double)((argb.FromJust() >> 020) & 0xff),
+        (double)((argb.FromJust() >> 010) & 0xff),
+        (double) (argb.FromJust() & 0xff),
+        (double)((argb.FromJust() >> 030) & 0xff) / 0xff);
+    } else {
+      throw std::invalid_argument("The only argument should be an integer representing RGBA color.");
+    }
+  }
+
+  Sass_Value* Color::construct(void) {
+    return sass_make_color(0.0, 0.0, 0.0, 1.0);
+  }
+
   Sass_Value* Color::construct(const std::vector<v8::Local<v8::Value>> raw_val) {
-    double a = 1.0, r = 0, g = 0, b = 0;
-    unsigned argb;
 
     switch (raw_val.size()) {
-    case 1:
-      if (!raw_val[0]->IsNumber()) {
-        throw std::invalid_argument("Only argument should be an integer.");
-      }
-
-      argb = raw_val[0]->ToInt32()->Value();
-      a = (double)((argb >> 030) & 0xff) / 0xff;
-      r = (double)((argb >> 020) & 0xff);
-      g = (double)((argb >> 010) & 0xff);
-      b = (double)(argb & 0xff);
-      break;
+     case 1:
+      return Color::construct(Nan::To<int32_t>(raw_val[0]));
 
     case 4:
-      if (!raw_val[3]->IsNumber()) {
-        throw std::invalid_argument("Constructor arguments should be numbers exclusively.");
-      }
-
-      a = raw_val[3]->ToNumber()->Value();
-      // fall through vvv
-
+      return Color::construct(Nan::To<double>(raw_val[0]),
+                              Nan::To<double>(raw_val[1]),
+                              Nan::To<double>(raw_val[2]),
+                              Nan::To<double>(raw_val[3]));
+      
     case 3:
-      if (!raw_val[0]->IsNumber() || !raw_val[1]->IsNumber() || !raw_val[2]->IsNumber()) {
-        throw std::invalid_argument("Constructor arguments should be numbers exclusively.");
-      }
-
-      r = raw_val[0]->ToNumber()->Value();
-      g = raw_val[1]->ToNumber()->Value();
-      b = raw_val[2]->ToNumber()->Value();
-      break;
+      return Color::construct(Nan::To<double>(raw_val[0]),
+                              Nan::To<double>(raw_val[1]),
+                              Nan::To<double>(raw_val[2]));
 
     case 0:
-      break;
+      return Color::construct();
 
     default:
       throw std::invalid_argument("Constructor should be invoked with either 0, 1, 3 or 4 arguments.");
     }
-
-    return sass_make_color(r, g, b, a);
   }
 
   void Color::initPrototype(v8::Local<v8::FunctionTemplate> proto) {

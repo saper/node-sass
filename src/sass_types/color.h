@@ -10,6 +10,19 @@ namespace SassTypes
     public:
       Color(Sass_Value*);
       static char const* get_constructor_name() { return "SassColor"; }
+      static Sass_Value* construct(Nan::Maybe <double>,
+                                   Nan::Maybe <double>,
+                                   Nan::Maybe <double>,
+                                   Nan::Maybe <double>);
+
+      static Sass_Value* construct(Nan::Maybe <double>,
+                                   Nan::Maybe <double>,
+                                   Nan::Maybe <double>);
+
+      static Sass_Value* construct(Nan::Maybe <int32_t>);
+
+      static Sass_Value* construct(void);
+
       static Sass_Value* construct(const std::vector<v8::Local<v8::Value>>);
 
       static void initPrototype(v8::Local<v8::FunctionTemplate>);
