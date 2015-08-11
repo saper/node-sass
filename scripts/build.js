@@ -18,9 +18,9 @@ require('../lib/extensions');
  * @api private
  */
 
-function afterBuild(options) {
+function afterBuild() {
   var install = process.sass.binaryPath;
-  var target = path.join(__dirname, '..', 'build', options.debug ? 'Debug' : 'Release', 'binding.node');
+  var target = path.join(__dirname, '..', 'build', process.config.target_defaults.default_configuration, 'binding.node');
 
   mkdir(path.dirname(install), function(err) {
     if (err && err.code !== 'EEXIST') {
@@ -30,6 +30,7 @@ function afterBuild(options) {
 
     fs.stat(target, function(err) {
       if (err) {
+        console.log('process.config.target_defaults.default_configuration: ', process.config.target_defaults.default_configuration);
         console.error('Build succeeded but target not found');
         return;
       }
@@ -141,7 +142,7 @@ function build(options) {
 
     proc.on('exit', function(errorCode) {
       if (!errorCode) {
-        afterBuild(options);
+        afterBuild();
 
         return;
       }
@@ -171,8 +172,6 @@ function parseArgs(args) {
       return false;
     } else if (arg.substring(0, 13) === '--target_arch') {
       options.arch = arg.substring(14);
-    } else if (arg === '-d' || arg === '--debug') {
-      options.debug = true;
     } else if (arg.substring(0, 13) === '--libsass_ext' && arg.substring(14) !== 'no') {
       options.libsassExt = true;
     }
