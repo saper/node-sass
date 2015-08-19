@@ -68,7 +68,11 @@ CallbackBridge<T, L>::CallbackBridge(Nan::Callback* callback, bool is_sync) : ca
     /* 
      * This is invoked from the main JavaScript thread.
      * V8 context is available.
+     *
+     * Establishes Local<> scope.
      */
+    Nan::HandleScope scope;
+
     v8::Local<v8::Function> func = CallbackBridge<T, L>::get_wrapper_constructor().ToLocalChecked();
     wrapper.Reset(Nan::NewInstance(func).ToLocalChecked());
     Nan::SetInternalFieldPointer(Nan::New(wrapper), 0, this);
@@ -185,6 +189,7 @@ NAN_METHOD(CallbackBridge<T COMMA L>::ReturnCallback) {
 
 template <typename T, typename L>
 Nan::MaybeLocal<v8::Function> CallbackBridge<T, L>::get_wrapper_constructor() {
+  /* Uses local scope from CallbackBridge<T, L> constructor */
   if (wrapper_constructor.IsEmpty()) {
     v8::Local<v8::FunctionTemplate> tpl = Nan::New<v8::FunctionTemplate>(New);
     tpl->SetClassName(Nan::New("CallbackBridge").ToLocalChecked());
