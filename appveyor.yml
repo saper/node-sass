@@ -13,6 +13,7 @@ environment:
 
 cache:
   - c:\users\appveyor\.node-gyp
+  - %APPDATA%\npm-cache
 
 install:
   - ps: Install-Product node $env:nodejs_version
