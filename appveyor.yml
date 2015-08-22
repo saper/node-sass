@@ -23,8 +23,6 @@ install:
   - npm install --msvs_version=2013
   - dir c:\users\appveyor\.node-gyp
 
-test_script: npm test
-
 on_success:
 # Save artifact with full qualified names of binding.node
 # (which we use in node-sass-binaries repo)
