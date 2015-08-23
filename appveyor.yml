@@ -10,7 +10,7 @@ environment:
 
 cache:
   - c:\Users\appveyor\.node-gyp
-  - c:\Users\appveyor\AppData\Roaming\npm-cache
+  - %AppData%\npm-cache
 
 install:
   - ps: Install-Product node $env:nodejs_version
