@@ -2,9 +2,6 @@ version: "{build}"
 
 build: off
 
-init:
- - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
 environment:
   SKIP_SASS_BINARY_DOWNLOAD_FOR_CI: true
   matrix:
@@ -31,7 +28,4 @@ on_success:
         Push-AppveyorArtifact $_.FullName -FileName
         (($_.FullName.Split('\\') | Select-Object -Last 2) -join '_')
       }
-
-on_finish:
- - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
