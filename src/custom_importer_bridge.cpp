@@ -90,8 +90,8 @@ Sass_Import* CustomImporterBridge::get_importer_entry(const v8::Local<v8::Object
   return sass_make_import_entry(path, contents, srcmap);
 }
 
-std::vector<v8::Local<v8::Value>> CustomImporterBridge::pre_process_args(std::vector<void*> in) const {
-  std::vector<v8::Local<v8::Value>> out;
+std::vector<v8::Local<v8::Value> > CustomImporterBridge::pre_process_args(std::vector<void*> in) const {
+  std::vector<v8::Local<v8::Value> > out;
 
   for (void* ptr : in) {
     out.push_back(Nan::New<v8::String>((char const*)ptr).ToLocalChecked());

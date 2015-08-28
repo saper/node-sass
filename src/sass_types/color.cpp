@@ -5,7 +5,7 @@ namespace SassTypes
 {
   Color::Color(Sass_Value* v) : SassValueWrapper(v) {}
 
-  Sass_Value* Color::construct(const std::vector<v8::Local<v8::Value>> raw_val) {
+  Sass_Value* Color::construct(const std::vector<v8::Local<v8::Value> > raw_val) {
     double a = 1.0, r = 0, g = 0, b = 0;
     unsigned argb;
 

@@ -5,7 +5,7 @@ namespace SassTypes
 {
   Map::Map(Sass_Value* v) : SassValueWrapper(v) {}
 
-  Sass_Value* Map::construct(const std::vector<v8::Local<v8::Value>> raw_val) {
+  Sass_Value* Map::construct(const std::vector<v8::Local<v8::Value> > raw_val) {
     size_t length = 0;
 
     if (raw_val.size() >= 1) {

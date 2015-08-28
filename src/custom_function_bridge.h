@@ -11,7 +11,7 @@ class CustomFunctionBridge : public CallbackBridge<Sass_Value*> {
 
   private:
     Sass_Value* post_process_return_value(v8::Local<v8::Value>) const;
-    std::vector<v8::Local<v8::Value>> pre_process_args(std::vector<void*>) const;
+    std::vector<v8::Local<v8::Value> > pre_process_args(std::vector<void*>) const;
 };
 
 #endif

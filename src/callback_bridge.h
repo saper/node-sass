@@ -37,7 +37,7 @@ class CallbackBridge {
     virtual T post_process_return_value(v8::Local<v8::Value>) const =0;
 
 
-    virtual std::vector<v8::Local<v8::Value>> pre_process_args(std::vector<L>) const =0;
+    virtual std::vector<v8::Local<v8::Value> > pre_process_args(std::vector<L>) const =0;
 
     Nan::Callback* callback;
     bool is_sync;
@@ -98,7 +98,7 @@ T CallbackBridge<T, L>::operator()(std::vector<void*> argv) {
      * post_process_args().
      */
     Nan::HandleScope scope;
-    std::vector<v8::Local<v8::Value>> argv_v8 = pre_process_args(argv);
+    std::vector<v8::Local<v8::Value> > argv_v8 = pre_process_args(argv);
     argv_v8.push_back(Nan::New(wrapper));
 
     return this->post_process_return_value(
@@ -148,7 +148,7 @@ void CallbackBridge<T, L>::dispatched_async_uv_callback(uv_async_t *req) {
   Nan::HandleScope scope;
   Nan::TryCatch try_catch;
 
-  std::vector<v8::Local<v8::Value>> argv_v8 = bridge->pre_process_args(bridge->argv);
+  std::vector<v8::Local<v8::Value> > argv_v8 = bridge->pre_process_args(bridge->argv);
   argv_v8.push_back(Nan::New(bridge->wrapper));
 
   bridge->callback->Call(argv_v8.size(), &argv_v8[0]);

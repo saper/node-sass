@@ -5,7 +5,7 @@ namespace SassTypes
 {
   List::List(Sass_Value* v) : SassValueWrapper(v) {}
 
-  Sass_Value* List::construct(const std::vector<v8::Local<v8::Value>> raw_val) {
+  Sass_Value* List::construct(const std::vector<v8::Local<v8::Value> > raw_val) {
     size_t length = 0;
     bool comma = true;
 

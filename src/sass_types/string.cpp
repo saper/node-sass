@@ -6,7 +6,7 @@ namespace SassTypes
 {
   String::String(Sass_Value* v) : SassValueWrapper(v) {}
 
-  Sass_Value* String::construct(const std::vector<v8::Local<v8::Value>> raw_val) {
+  Sass_Value* String::construct(const std::vector<v8::Local<v8::Value> > raw_val) {
     char const* value = "";
 
     if (raw_val.size() >= 1) {

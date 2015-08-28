@@ -88,7 +88,7 @@ namespace SassTypes
 
   template <class T>
   NAN_METHOD(SassValueWrapper<T>::New) {
-    std::vector<v8::Local<v8::Value>> localArgs(info.Length());
+    std::vector<v8::Local<v8::Value> > localArgs(info.Length());
 
     for (auto i = 0; i < info.Length(); ++i) {
       localArgs[i] = info[i];

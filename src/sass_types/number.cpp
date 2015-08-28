@@ -6,7 +6,7 @@ namespace SassTypes
 {
   Number::Number(Sass_Value* v) : SassValueWrapper(v) {}
 
-  Sass_Value* Number::construct(const std::vector<v8::Local<v8::Value>> raw_val) {
+  Sass_Value* Number::construct(const std::vector<v8::Local<v8::Value> > raw_val) {
     double value = 0;
     char const* unit = "";
 

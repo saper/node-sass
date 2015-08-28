@@ -179,7 +179,7 @@ void GetStats(sass_context_wrapper* ctx_w, Sass_Context* ctx) {
   v8::Local<v8::Array> arr = Nan::New<v8::Array>();
 
   if (included_files) {
-    for (int i = 0; included_files[i] != nullptr; ++i) {
+    for (int i = 0; included_files[i] != NULL; ++i) {
       Nan::Set(arr, i, Nan::New<v8::String>(included_files[i]).ToLocalChecked());
     }
   }
