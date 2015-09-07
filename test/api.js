@@ -4,9 +4,11 @@ var assert = require('assert'),
     read = fs.readFileSync,
     sass = process.env.NODESASS_COV ? require('../lib-cov') : require('../lib'),
     fixture = path.join.bind(null, __dirname, 'fixtures'),
-    resolveFixture = path.resolve.bind(null, __dirname, 'fixtures');
+    resolveFixture = path.resolve.bind(null, __dirname, 'fixtures'),
+    LIBSASS_VERSION = null;
 
 describe('api', function() {
+
   describe('.render(options, callback)', function() {
     it('should compile sass to css with file', function(done) {
       var expected = read(fixture('simple/expected.css'), 'utf8').trim();
@@ -980,7 +982,7 @@ describe('api', function() {
         file: fixture('include-files/index.scss')
       }, function(error, result) {
         assert(!error);
-        assert.deepEqual(result.stats.includedFiles, expected);
+        assert.deepEqual(result.stats.includedFiles.sort(), expected.sort());
         done();
       });
     });
@@ -1441,11 +1443,12 @@ describe('api', function() {
         fixture('include-files/bar.scss').replace(/\\/g, '/'),
         fixture('include-files/foo.scss').replace(/\\/g, '/'),
         fixture('include-files/index.scss').replace(/\\/g, '/')
-      ];
+      ].sort();
+      var actual = result.stats.includedFiles.sort();
 
-      assert.equal(result.stats.includedFiles[0], expected[0]);
-      assert.equal(result.stats.includedFiles[1], expected[1]);
-      assert.equal(result.stats.includedFiles[2], expected[2]);
+      assert.equal(actual[0], expected[0]);
+      assert.equal(actual[1], expected[1]);
+      assert.equal(actual[2], expected[2]);
       done();
     });
 
