@@ -56,9 +56,7 @@
         }],
         ['OS=="mac"', {
           'xcode_settings': {
-            'OTHER_CPLUSPLUSFLAGS': [
-              '-std=c++11'
-            ],
+            'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
             'OTHER_LDFLAGS': [],
             'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
             'MACOSX_DEPLOYMENT_TARGET': '10.7'
@@ -67,9 +65,7 @@
         ['OS=="win"', {
           'msvs_settings': {
             'VCCLCompilerTool': {
-              'AdditionalOptions': [
-                '/EHsc'
-              ]
+              'ExceptionHandling': 0
             }
           }
         }],

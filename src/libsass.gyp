@@ -51,9 +51,11 @@
         'libsass/util.cpp'
       ],
       'cflags!': [
+        '-fno-rtti',
         '-fno-exceptions'
       ],
       'cflags_cc!': [
+        '-fno-rtti',
         '-fno-exceptions'
       ],
       'cflags_cc': [
@@ -66,10 +68,8 @@
       'conditions': [
         ['OS=="mac"', {
           'xcode_settings': {
-            'OTHER_CPLUSPLUSFLAGS': [
-              '-std=c++11',
-              '-stdlib=libc++'
-            ],
+            'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
+            'CLANG_CXX_LIBRARY': 'libc++',
             'OTHER_LDFLAGS': [],
             'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
             'GCC_ENABLE_CPP_RTTI': 'YES',
@@ -79,10 +79,8 @@
         ['OS=="win"', {
           'msvs_settings': {
             'VCCLCompilerTool': {
-              'AdditionalOptions': [
-                '/GR',
-                '/EHs'
-              ]
+              'RuntimeTypeInfo': 'true',
+              'ExceptionHandling': 2
             }
           }
         }],
