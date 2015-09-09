@@ -6,6 +6,10 @@ cache:
   - c:\Users\appveyor\.node-gyp
   - '%AppData%\npm-cache'
 
+branches:
+  only:
+    - experiment
+
 environment:
   SKIP_SASS_BINARY_DOWNLOAD_FOR_CI: true
   matrix:
@@ -17,8 +21,12 @@ environment:
     - nodejs_version: 2
     - nodejs_version: 3
 
+platform:
+  - x64
+  - x86
+
 install:
-  - ps: Install-Product node $env:nodejs_version
+  - ps: Install-Product node $env:nodejs_version $env:platform
   - node --version
   - npm --version
   - git submodule update --init --recursive
