@@ -1,44 +1,71 @@
-version: "{build}"
+-
+  branches:
+    only:
+      - release
 
-build: off
+  configuration: release
 
-cache:  
-  - c:\Users\appveyor\.node-gyp
-  - '%AppData%\npm-cache'
+  platform:
+    - x64
+    - x86
 
-branches:
-  only:
-    - experiment
+  version: "{build}"
+  build: off
 
-environment:
-  SKIP_SASS_BINARY_DOWNLOAD_FOR_CI: true
-  matrix:
-    # node.js
-    - nodejs_version: 0.10
-    - nodejs_version: 0.12
-    # io.js
-    - nodejs_version: 1
-    - nodejs_version: 2
-    - nodejs_version: 3
+  cache:  
+    - c:\Users\appveyor\.node-gyp
+    - '%AppData%\npm-cache'
 
-platform:
-  - x64
-  - x86
+  environment:
+    SKIP_SASS_BINARY_DOWNLOAD_FOR_CI: true
+    matrix:
+      # node.js
+      - nodejs_version: 0.10
+      - nodejs_version: 0.12
+      # io.js
+      - nodejs_version: 1
+      - nodejs_version: 2
+      - nodejs_version: 3
 
-install:
-  - ps: Install-Product node $env:nodejs_version $env:platform
-  - node --version
-  - npm --version
-  - git submodule update --init --recursive
-  - npm install --msvs_version=2013
+  install:
+    - ps: Install-Product node $env:nodejs_version $env:platform
+    - node --version
+    - npm --version
+    - git submodule update --init --recursive
+    - npm install --msvs_version=2013
 
-test_script: npm test
+  test_script: npm test
 
-on_success:
-# Save artifact with full qualified names of binding.node
-# (which we use in node-sass-binaries repo)
-- ps: Get-ChildItem .\vendor\**\*.node | % `
-      {
-        Push-AppveyorArtifact $_.FullName -FileName
-        (($_.FullName.Split('\\') | Select-Object -Last 2) -join '_')
-      }
+-
+  configuration: testing
+
+  platform:
+    - x86
+
+  version: "{build}"
+  build: off
+
+  cache:  
+    - c:\Users\appveyor\.node-gyp
+    - '%AppData%\npm-cache'
+
+  environment:
+    SKIP_SASS_BINARY_DOWNLOAD_FOR_CI: true
+    matrix:
+      # node.js
+      - nodejs_version: 0.10
+      - nodejs_version: 0.12
+      # io.js
+      - nodejs_version: 1
+      - nodejs_version: 2
+      - nodejs_version: 3
+
+  install:
+    - ps: Install-Product node $env:nodejs_version $env:platform
+    - node --version
+    - npm --version
+    - git submodule update --init --recursive
+    - npm install --msvs_version=2013
+
+  test_script: npm test
+
