@@ -63,7 +63,7 @@
 
   build: off
 
-  cache:
+  cache:  
     - '%userprofile%\.node-gyp'
     - '%AppData%\npm-cache'
 
