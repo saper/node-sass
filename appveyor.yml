@@ -19,8 +19,6 @@
     - mkdir c:\project\node_modules
     - subst s: c:\project
 
-  clone_folder: s:\node_modules\node-sass
-
   cache:
     - '%userprofile%\.node-gyp'
     - '%AppData%\npm-cache'
