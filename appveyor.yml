@@ -17,7 +17,7 @@
 
   init:
     - mkdir c:\project\node_modules
-    - subst s: c:\project\node_modules
+    - subst s: c:\project
 
   clone_folder: s:\node_modules\node-sass
 
