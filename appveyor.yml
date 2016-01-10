@@ -14,6 +14,8 @@
 
   build: off
 
+  clone_folder: c:\projects\node_modules\node-sass
+
   init:
     - ps: gwmi win32_logicaldisk | % { $_.DeviceID }
     - cmd: >-
@@ -23,10 +25,7 @@
         subst s: c:\projects
 
     - ps: gwmi win32_logicaldisk | % { $_.DeviceID }
-    - mkdir s:\node_modules
-    - cd /d s:\node_modules
-
-  clone_folder: s:\node_modules
+    - ps: set-location -path s:\node_modules\node-sass
 
   on_finish:
     - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
