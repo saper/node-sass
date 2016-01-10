@@ -16,9 +16,9 @@
 
   init:
     - mkdir c:\project\node_modules
-    - echo About to subst
     - cmd: >-
-      c:\windows\system32\cmd /c subst s: c:\project
+        echo About to subst
+        c:\windows\system32\cmd /c c:\windows\system32\subst s: c:\project
 
     - cmd: >-
       dir s:
