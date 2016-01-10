@@ -17,7 +17,9 @@
 
   init:
     - mkdir c:\project\node_modules
+    - echo About to subst
     - subst s: c:\project
+    - cd /d s:\node_modules\node_sass
 
   cache:
     - '%userprofile%\.node-gyp'
