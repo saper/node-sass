@@ -21,8 +21,8 @@
     - echo About to subst
     - cmd: >-
       subst s: c:\project
-      dir s:\
 
+    - cmd: dir s\:
     - cd /d s:\node_modules\node_sass
 
   on_finish:
