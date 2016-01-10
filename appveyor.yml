@@ -16,9 +16,12 @@
 
   init:
     - mkdir c:\project\node_modules
+    - echo APPVEYOR_REPO_TAG=%APPVEYOR_REPO_TAG%
+    - echo APPVEYOR_REPO_TAG_NAME=%APPVEYOR_REPO_TAG_NAME%
     - echo About to subst
     - cmd: >-
       subst s: c:\project
+      dir s:\
     - cd /d s:\node_modules\node_sass
 
   on_finish:
