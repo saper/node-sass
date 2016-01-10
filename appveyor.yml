@@ -18,10 +18,12 @@
     - mkdir c:\project\node_modules
     - cmd: >-
         echo About to subst
+
+    - cmd: >-
         c:\windows\system32\cmd /c c:\windows\system32\subst s: c:\project
 
     - cmd: >-
-      dir s:
+        dir s:
 
     - ps: Set-Location -Path s:\node_modules
     - cd /d s:\node_modules\node_sass
