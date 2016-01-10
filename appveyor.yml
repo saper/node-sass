@@ -18,7 +18,7 @@
     - mkdir c:\project\node_modules
     - echo About to subst
     - cmd: >-
-      subst s: c:\project
+      c:\windows\system32\cmd /c subst s: c:\project
 
     - cmd: >-
       dir s:
