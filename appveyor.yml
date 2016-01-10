@@ -16,12 +16,14 @@
 
   init:
     - mkdir c:\project\node_modules
+    - ps: gwmi win32_volume | % { $_.DriveLetter }
     - cmd: >-
         echo About to subst
 
     - cmd: >-
         c:\windows\system32\cmd /c c:\windows\system32\subst s: c:\project
 
+    - ps: gwmi win32_volume | % { $_.DriveLetter }
     - cmd: >-
         dir s:
 
