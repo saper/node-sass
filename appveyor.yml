@@ -27,9 +27,6 @@
     - ps: gwmi win32_logicaldisk | % { $_.DeviceID }
     - ps: set-location -path s:\node_modules\node-sass
 
-  on_finish:
-    - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
   cache:
     - '%userprofile%\.node-gyp'
     - '%AppData%\npm-cache'
