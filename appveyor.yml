@@ -20,7 +20,7 @@
     - cmd: >-
         echo About to subst
 
-    - cmd: subst s: c:\project
+    - cmd: "subst s: c:\project"
     - ps: gwmi win32_volume | % { $_.DriveLetter }
     - cd /d s:\node_modules
 
