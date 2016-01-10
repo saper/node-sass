@@ -15,16 +15,18 @@
   build: off
 
   init:
-    - mkdir c:\project\node_modules
     - ps: gwmi win32_volume | % { $_.DriveLetter }
     - cmd: >-
         echo About to subst
 
     - cmd: >-
-        subst s: c:\project
+        subst s: c:\projects
 
     - ps: gwmi win32_volume | % { $_.DriveLetter }
+    - mkdir s:\node_modules
     - cd /d s:\node_modules
+
+  clone_folder: s:\node_modules
 
   on_finish:
     - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
