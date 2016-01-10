@@ -60,7 +60,7 @@
                        ( ( $_, "binding.node" ) -join '_' ) ),
                   @( ".\build\Release\binding.pdb", 
                        ( ( $_, "binding.pdb" ) -join '_' ) )
-               ) } } | % { Push-AppveyorArtifact $_[0] -FileName $[1] }
+               ) } } | % { Push-AppveyorArtifact $_[0] -FileName $_[1] }
 
   deploy:
     - provider: GitHub
