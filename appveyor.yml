@@ -15,14 +15,14 @@
   build: off
 
   init:
-    - ps: gwmi win32_volume | % { $_.DriveLetter }
+    - ps: gwmi win32_logicaldisk | % { $_.DeviceID }
     - cmd: >-
         echo About to subst
 
     - cmd: >-
         subst s: c:\projects
 
-    - ps: gwmi win32_volume | % { $_.DriveLetter }
+    - ps: gwmi win32_logicaldisk | % { $_.DeviceID }
     - mkdir s:\node_modules
     - cd /d s:\node_modules
 
