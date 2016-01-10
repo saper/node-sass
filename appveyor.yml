@@ -48,14 +48,15 @@
     # Save artifacts with full qualified names of binding.node and binding.pdb
     # (which we use in node-sass-binaries repo)
     - ps: >-
-        .Get-ChildItem .\vendor\**\*.node | %
-        { $_.FullName.Split('\\') | Select-Object -Last 2 | Select-Object -First 1 } |
-        .{ process { (
-            @( $( Get-ChildItem .\vendor\**\*.node ).FullName,
-                 ( ( $_, "binding.node" ) -join '_' ) ),
-            @( ".\build\Release\binding.pdb", 
-                 ( ( $_, "binding.pdb" ) -join '_' ) )
-        ) } } | % { Push_AppveyorArtifact $_[0] -FileName $[1] }
+        Get-ChildItem .\vendor\**\*.node | % {
+           ( $BindingName = $_.FullName ).Split('\\') |
+             Select-Object -Last 2 | Select-Object -First 1 } |
+               .{ process { (
+                  @( $BindingName,
+                       ( ( $_, "binding.node" ) -join '_' ) ),
+                  @( ".\build\Release\binding.pdb", 
+                       ( ( $_, "binding.pdb" ) -join '_' ) )
+               ) } } | % { Push_AppveyorArtifact $_[0] -FileName $[1] }
 
   deploy:
     - provider: GitHub
