@@ -1,6 +1,4 @@
 -
-  os: Visual Studio 2015
-
   branches:
     only:
       - release
@@ -38,7 +36,7 @@
     - node --version
     - npm --version
     - git submodule update --init --recursive
-    - npm install --msvs_version=2015
+    - npm install --msvs_version=2013
 
   test_script: npm test
 
@@ -67,8 +65,6 @@
         appveyor_repo_tag: true       # deploy on tag push only
 
 -
-  os: Visual Studio 2015
-
   configuration: testing
 
   platform:
@@ -99,6 +95,6 @@
     - node --version
     - npm --version
     - git submodule update --init --recursive
-    - npm install --msvs_version=2015
+    - npm install --msvs_version=2013
 
   test_script: npm test
